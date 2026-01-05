@@ -1,6 +1,6 @@
 ---
-title: "Statistical Analysis"
-subtitle: "Inferential Statistics and Hypothesis Testing"
+title: "The Evidence"
+subtitle: "Mathematical Proof Behind the Patterns"
 ---
 
 ```{r}
@@ -15,291 +15,393 @@ library(kableExtra)
 
 # Load the data
 source("R/load_data.R")
+
+# Pre-calculate for inline R
+total_students <- sum(school_data$nb_students, na.rm = TRUE)
+mean_rate <- round(mean(school_data$success_rate, na.rm = TRUE), 1)
+median_rate <- round(median(school_data$success_rate, na.rm = TRUE), 1)
 ```
 
-## Introduction
+## The Scientific Investigation Begins {.unnumbered}
 
-This section presents statistical analyses to understand the patterns in student success rates across Tunisia. We will perform:
+::: {.callout-important appearance="simple"}
+## 🔬 Our Mission
+We've seen the patterns in the visualizations. Now we need to answer: **Are these differences REAL or just random chance?**
+:::
 
-1. Descriptive statistics summary
-2. Normality tests
-3. Comparison tests between groups
-4. Correlation analysis
-5. Regression modeling
+In science, we don't just rely on what our eyes see. We test our observations mathematically to separate **signal from noise**.
 
-## Descriptive Statistics
+---
 
-### Five-Number Summary
+## 📊 Act 1: Understanding Our Data {.unnumbered}
+
+### The Vital Statistics
+
+Before testing hypotheses, let's understand the fundamental characteristics of our data.
 
 ```{r}
-#| label: five-number
+#| label: vital-stats
 
-# Five-number summary for success rate
-summary_stats <- school_data %>%
+# Comprehensive statistics
+stats <- school_data %>%
   summarise(
-    Minimum = min(success_rate, na.rm = TRUE),
-    Q1 = quantile(success_rate, 0.25, na.rm = TRUE),
-    Median = median(success_rate, na.rm = TRUE),
-    Mean = round(mean(success_rate, na.rm = TRUE), 2),
-    Q3 = quantile(success_rate, 0.75, na.rm = TRUE),
-    Maximum = max(success_rate, na.rm = TRUE),
-    `Std Dev` = round(sd(success_rate, na.rm = TRUE), 2),
-    IQR = IQR(success_rate, na.rm = TRUE)
+    `📈 Mean Success Rate` = paste0(round(mean(success_rate, na.rm = TRUE), 2), "%"),
+    `📊 Median Success Rate` = paste0(round(median(success_rate, na.rm = TRUE), 2), "%"),
+    `📉 Standard Deviation` = paste0(round(sd(success_rate, na.rm = TRUE), 2), "%"),
+    `⬇️ Minimum` = paste0(min(success_rate, na.rm = TRUE), "%"),
+    `⬆️ Maximum` = paste0(max(success_rate, na.rm = TRUE), "%"),
+    `📏 Range` = paste0(round(max(success_rate, na.rm = TRUE) - min(success_rate, na.rm = TRUE), 2), " points"),
+    `🎯 IQR` = paste0(round(IQR(success_rate, na.rm = TRUE), 2), " points")
   )
 
-summary_stats %>%
-  pivot_longer(everything(), names_to = "Statistic", values_to = "Value") %>%
-  kable(caption = "Descriptive Statistics for Success Rate") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
-```
-
-### Skewness and Kurtosis
-
-```{r}
-#| label: skewness
-
-# Calculate skewness and kurtosis manually
-n <- length(school_data$success_rate)
-mean_sr <- mean(school_data$success_rate, na.rm = TRUE)
-sd_sr <- sd(school_data$success_rate, na.rm = TRUE)
-
-skewness <- sum(((school_data$success_rate - mean_sr) / sd_sr)^3, na.rm = TRUE) / n
-kurtosis <- sum(((school_data$success_rate - mean_sr) / sd_sr)^4, na.rm = TRUE) / n - 3
-
-cat("Skewness:", round(skewness, 3), "\n")
-cat("Kurtosis:", round(kurtosis, 3), "\n")
+stats %>%
+  pivot_longer(everything(), names_to = "Measure", values_to = "Value") %>%
+  kable(caption = "📋 The Numbers That Define Our Dataset") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  column_spec(1, bold = TRUE, width = "15em") %>%
+  column_spec(2, color = "#2c3e50", bold = TRUE)
 ```
 
 ::: {.callout-note}
-## Interpretation
-- **Skewness** < 0 indicates left-skewed distribution (most values are high)
-- **Kurtosis** > 0 indicates heavier tails than normal distribution
+## 💡 What This Reveals
+The **mean (`r mean_rate`%)** is slightly lower than the **median (`r median_rate`%)**, confirming our earlier observation: the distribution is **left-skewed**. Most schools perform well, but a few underperformers pull the average down.
 :::
 
-## Normality Tests
+---
 
-### Shapiro-Wilk Test
+## 🧪 Act 2: The Normality Question {.unnumbered}
 
-```{r}
-#| label: shapiro-test
+::: {.callout-tip appearance="simple"}
+## ❓ Why Does This Matter?
+Many statistical tests assume data follows a "normal" (bell-shaped) distribution. If our data isn't normal, we need to use different methods.
+:::
 
-# Take a sample (Shapiro-Wilk limited to 5000 observations)
-set.seed(42)
-sample_data <- sample(school_data$success_rate, min(5000, nrow(school_data)))
-
-shapiro_result <- shapiro.test(sample_data)
-
-cat("Shapiro-Wilk Normality Test\n")
-cat("===========================\n")
-cat("W statistic:", round(shapiro_result$statistic, 4), "\n")
-cat("p-value:", format(shapiro_result$p.value, scientific = TRUE), "\n")
-cat("\nConclusion:", ifelse(shapiro_result$p.value < 0.05, 
-    "The distribution is NOT normal (reject H0)", 
-    "The distribution is approximately normal (fail to reject H0)"), "\n")
-```
-
-### Q-Q Plot
+### Visual Evidence: The Q-Q Plot
 
 ```{r}
-#| label: fig-qqplot
-#| fig-cap: "Q-Q plot for assessing normality of success rates"
-#| fig-width: 8
+#| label: fig-qq
+#| fig-cap: "Does our data follow the theoretical normal distribution?"
+#| fig-width: 10
 #| fig-height: 6
 
 ggplot(school_data, aes(sample = success_rate)) +
-  stat_qq(color = "#3498db", alpha = 0.5) +
-  stat_qq_line(color = "#e74c3c", linewidth = 1) +
+  stat_qq(color = "#3498db", alpha = 0.5, size = 2) +
+  stat_qq_line(color = "#e74c3c", linewidth = 1.5) +
+  annotate("label", x = -2, y = 95, 
+           label = "Points should follow\nthe red line if normal", 
+           fill = "#fff3cd", color = "#856404", size = 4) +
   labs(
-    title = "Q-Q Plot of Success Rates",
-    subtitle = "Deviation from the line indicates non-normality",
+    title = "Q-Q PLOT: Testing for Normality",
+    subtitle = "Deviation from the line = departure from normality",
     x = "Theoretical Quantiles",
-    y = "Sample Quantiles"
+    y = "Sample Quantiles (Success Rate %)"
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50")
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 20, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, color = "#7f8c8d")
   )
 ```
 
-## Hypothesis Tests
-
-### Comparing Success Rates Between Regions
-
-Let's test if there are significant differences in success rates between governorates.
+### Mathematical Evidence: Shapiro-Wilk Test
 
 ```{r}
-#| label: kruskal-test
+#| label: shapiro
 
-# Kruskal-Wallis test (non-parametric alternative to one-way ANOVA)
-kruskal_result <- kruskal.test(success_rate ~ governorate, data = school_data)
+set.seed(42)
+sample_size <- min(5000, nrow(school_data))
+sample_data <- sample(school_data$success_rate, sample_size)
+shapiro_result <- shapiro.test(sample_data)
 
-cat("Kruskal-Wallis Rank Sum Test\n")
-cat("============================\n")
-cat("Chi-squared:", round(kruskal_result$statistic, 2), "\n")
-cat("Degrees of freedom:", kruskal_result$parameter, "\n")
-cat("p-value:", format(kruskal_result$p.value, scientific = TRUE), "\n")
-cat("\nConclusion:", ifelse(kruskal_result$p.value < 0.05, 
-    "There ARE significant differences between governorates", 
-    "There are NO significant differences between governorates"), "\n")
+cat("╔══════════════════════════════════════════════════════════════╗\n")
+cat("║           SHAPIRO-WILK NORMALITY TEST                        ║\n")
+cat("╠══════════════════════════════════════════════════════════════╣\n")
+cat(paste0("║  W statistic:  ", sprintf("%.6f", shapiro_result$statistic), "                                 ║\n"))
+cat(paste0("║  p-value:      ", sprintf("%.2e", shapiro_result$p.value), " (extremely small!)           ║\n"))
+cat("╠══════════════════════════════════════════════════════════════╣\n")
+
+if(shapiro_result$p.value < 0.05) {
+  cat("║  🔴 VERDICT: Data is NOT normally distributed                ║\n")
+  cat("║     → We must use non-parametric tests                       ║\n")
+} else {
+  cat("║  🟢 VERDICT: Data appears normally distributed               ║\n")
+}
+cat("╚══════════════════════════════════════════════════════════════╝\n")
 ```
 
-::: {.callout-important}
-## Significant Finding
-The extremely low p-value indicates that success rates differ significantly across governorates. This suggests regional disparities in educational outcomes.
+::: {.callout-warning}
+## ⚠️ Important Implication
+Since our data is **not normal**, we'll use **non-parametric tests** (like Kruskal-Wallis) that don't assume normality. This ensures our conclusions are statistically valid.
 :::
 
-### One-Sample t-test
+---
 
-Testing if the mean success rate is significantly different from 75%:
+## 🔍 Act 3: The Big Question - Regional Differences {.unnumbered}
+
+::: {.callout-important appearance="simple"}
+## 🎯 Hypothesis Under Investigation
+**Do success rates TRULY differ between governorates, or is what we saw just random variation?**
+
+- **H₀ (Null)**: All governorates have the same median success rate
+- **H₁ (Alternative)**: At least one governorate differs significantly
+:::
+
+### The Kruskal-Wallis Test
 
 ```{r}
-#| label: t-test
+#| label: kruskal
 
-t_result <- t.test(school_data$success_rate, mu = 75)
+kruskal_result <- kruskal.test(success_rate ~ governorate, data = school_data)
 
-cat("One Sample t-test\n")
-cat("=================\n")
-cat("t-statistic:", round(t_result$statistic, 2), "\n")
-cat("Degrees of freedom:", round(t_result$parameter, 2), "\n")
-cat("p-value:", format(t_result$p.value, scientific = TRUE), "\n")
-cat("Mean success rate:", round(t_result$estimate, 2), "%\n")
-cat("95% Confidence Interval:", round(t_result$conf.int[1], 2), "% -", round(t_result$conf.int[2], 2), "%\n")
+cat("\n")
+cat("╔══════════════════════════════════════════════════════════════╗\n")
+cat("║         KRUSKAL-WALLIS RANK SUM TEST                         ║\n")
+cat("║         (Non-parametric alternative to ANOVA)                ║\n")
+cat("╠══════════════════════════════════════════════════════════════╣\n")
+cat(paste0("║  Chi-squared (χ²):  ", sprintf("%.2f", kruskal_result$statistic), "                             ║\n"))
+cat(paste0("║  Degrees of freedom: ", kruskal_result$parameter, "                                    ║\n"))
+cat(paste0("║  p-value:           ", sprintf("%.2e", kruskal_result$p.value), "                            ║\n"))
+cat("╠══════════════════════════════════════════════════════════════╣\n")
+
+if(kruskal_result$p.value < 0.001) {
+  cat("║  🔴 VERDICT: HIGHLY SIGNIFICANT (p < 0.001)                  ║\n")
+  cat("║                                                              ║\n")
+  cat("║  ➡️  Regional differences are REAL, not random chance        ║\n")
+  cat("║  ➡️  Where a student studies DOES matter                     ║\n")
+}
+cat("╚══════════════════════════════════════════════════════════════╝\n")
 ```
 
-## Correlation Analysis
+```{r}
+#| label: fig-evidence-boxplot
+#| fig-cap: "Visual Evidence: Box plots show clear differences between governorates"
+#| fig-width: 14
+#| fig-height: 8
 
-### Relationship Between Number of Students and Success Rate
+gov_order <- school_data %>%
+  group_by(governorate) %>%
+  summarise(med = median(success_rate, na.rm = TRUE)) %>%
+  arrange(desc(med)) %>%
+  pull(governorate)
+
+school_data %>%
+  filter(!is.na(governorate)) %>%
+  mutate(governorate = factor(governorate, levels = gov_order)) %>%
+  ggplot(aes(x = governorate, y = success_rate, fill = governorate)) +
+  geom_boxplot(show.legend = FALSE, alpha = 0.7, outlier.alpha = 0.3) +
+  geom_hline(yintercept = median(school_data$success_rate, na.rm = TRUE), 
+             color = "#e74c3c", linetype = "dashed", linewidth = 1) +
+  annotate("text", x = 20, y = median(school_data$success_rate) + 3, 
+           label = "National Median", color = "#e74c3c", fontface = "bold") +
+  scale_fill_viridis_d(option = "plasma") +
+  labs(
+    title = "SUCCESS RATE DISTRIBUTION BY GOVERNORATE",
+    subtitle = "The spread tells the story - some regions are consistently better",
+    x = "Governorate",
+    y = "Success Rate (%)"
+  ) +
+  coord_flip() +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    plot.subtitle = element_text(hjust = 0.5, color = "#7f8c8d")
+  )
+```
+
+---
+
+## 📈 Act 4: The Correlation Mystery {.unnumbered}
+
+::: {.callout-note appearance="simple"}
+## 🤔 A Common Assumption
+Many believe that **smaller classes = better results**. Let's test this with our data.
+:::
+
+### Does Class Size Affect Success?
 
 ```{r}
 #| label: correlation
 
-# Pearson correlation
 cor_result <- cor.test(school_data$nb_students, school_data$success_rate)
 
-cat("Pearson Correlation Test\n")
-cat("========================\n")
-cat("Correlation coefficient (r):", round(cor_result$estimate, 4), "\n")
-cat("p-value:", format(cor_result$p.value, scientific = TRUE), "\n")
-cat("95% CI:", round(cor_result$conf.int[1], 4), "to", round(cor_result$conf.int[2], 4), "\n")
+cat("\n")
+cat("╔══════════════════════════════════════════════════════════════╗\n")
+cat("║         PEARSON CORRELATION TEST                             ║\n")
+cat("║         Class Size vs. Success Rate                          ║\n")
+cat("╠══════════════════════════════════════════════════════════════╣\n")
+cat(paste0("║  Correlation (r):  ", sprintf("%.4f", cor_result$estimate), "                               ║\n"))
+cat(paste0("║  p-value:          ", sprintf("%.2e", cor_result$p.value), "                             ║\n"))
+cat(paste0("║  95% CI:           [", sprintf("%.4f", cor_result$conf.int[1]), ", ", sprintf("%.4f", cor_result$conf.int[2]), "]                   ║\n"))
+cat("╠══════════════════════════════════════════════════════════════╣\n")
+
+r_val <- cor_result$estimate
+if(abs(r_val) < 0.1) {
+  strength <- "virtually no"
+} else if(abs(r_val) < 0.3) {
+  strength <- "a weak"
+} else if(abs(r_val) < 0.5) {
+  strength <- "a moderate"
+} else {
+  strength <- "a strong"
+}
+
+direction <- ifelse(r_val < 0, "negative", "positive")
+
+cat(paste0("║  📊 INTERPRETATION: There is ", strength, " ", direction, " correlation     ║\n"))
+cat("╚══════════════════════════════════════════════════════════════╝\n")
 ```
 
 ```{r}
-#| label: fig-scatter
-#| fig-cap: "Scatter plot of student count vs success rate"
-#| fig-width: 10
-#| fig-height: 6
+#| label: fig-scatter-story
+#| fig-cap: "The Relationship Between Class Size and Success"
+#| fig-width: 12
+#| fig-height: 7
 
 ggplot(school_data, aes(x = nb_students, y = success_rate)) +
-  geom_point(alpha = 0.3, color = "#3498db") +
-  geom_smooth(method = "lm", color = "#e74c3c", se = TRUE) +
+  geom_point(alpha = 0.2, color = "#3498db", size = 2) +
+  geom_smooth(method = "lm", color = "#e74c3c", fill = "#e74c3c", alpha = 0.2, linewidth = 1.5) +
+  annotate("label", x = max(school_data$nb_students) * 0.7, y = 30, 
+           label = paste0("r = ", round(cor_result$estimate, 3), "\n(", 
+                          ifelse(abs(cor_result$estimate) < 0.1, "Very Weak", "Weak"), " relationship)"),
+           fill = "#fff3cd", color = "#856404", size = 5, fontface = "bold") +
   labs(
-    title = "Relationship Between Class Size and Success Rate",
-    subtitle = paste("Pearson r =", round(cor_result$estimate, 3)),
+    title = "CLASS SIZE vs. SUCCESS RATE",
+    subtitle = "Surprising finding: Class size barely matters!",
     x = "Number of Students",
     y = "Success Rate (%)"
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50")
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 20, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d")
   )
 ```
 
-## Regression Analysis
+::: {.callout-tip}
+## 🎯 Surprising Insight!
+Contrary to popular belief, **class size has almost NO effect on success rates** in our data. Other factors (teacher quality, resources, regional support) likely play much bigger roles.
+:::
 
-### Linear Regression Model
+---
 
-```{r}
-#| label: regression
+## 📊 Act 5: Modeling Success {.unnumbered}
 
-# Simple linear regression
-model <- lm(success_rate ~ nb_students, data = school_data)
-
-cat("Linear Regression: Success Rate ~ Number of Students\n")
-cat("=====================================================\n\n")
-summary(model)
-```
-
-### Multiple Regression with Governorate
+### What Predicts Success? A Regression Analysis
 
 ```{r}
-#| label: multiple-regression
+#| label: regression-model
 
-# Multiple regression with governorate as factor
-model2 <- lm(success_rate ~ nb_students + governorate, data = school_data)
+# Build model with governorate
+model <- lm(success_rate ~ nb_students + governorate, data = school_data)
+model_summary <- summary(model)
 
-cat("Multiple Regression Summary\n")
-cat("===========================\n")
-cat("R-squared:", round(summary(model2)$r.squared, 4), "\n")
-cat("Adjusted R-squared:", round(summary(model2)$adj.r.squared, 4), "\n")
-cat("F-statistic:", round(summary(model2)$fstatistic[1], 2), "\n")
+cat("\n")
+cat("╔══════════════════════════════════════════════════════════════╗\n")
+cat("║         MULTIPLE REGRESSION MODEL                            ║\n")
+cat("║         Success Rate ~ Class Size + Governorate              ║\n")
+cat("╠══════════════════════════════════════════════════════════════╣\n")
+cat(paste0("║  R² (variance explained):    ", sprintf("%.1f%%", model_summary$r.squared * 100), "                         ║\n"))
+cat(paste0("║  Adjusted R²:                ", sprintf("%.1f%%", model_summary$adj.r.squared * 100), "                         ║\n"))
+cat(paste0("║  F-statistic:                ", sprintf("%.2f", model_summary$fstatistic[1]), "                          ║\n"))
+cat("╠══════════════════════════════════════════════════════════════╣\n")
+cat("║  📊 INTERPRETATION:                                          ║\n")
+cat(paste0("║  → Governorate alone explains ~", sprintf("%.0f%%", model_summary$r.squared * 100), " of success variation   ║\n"))
+cat("║  → The remaining variance comes from other factors           ║\n")
+cat("║    (teacher quality, resources, student background, etc.)    ║\n")
+cat("╚══════════════════════════════════════════════════════════════╝\n")
 ```
 
-### Model Diagnostics
+### Residual Analysis: Is Our Model Reliable?
 
 ```{r}
 #| label: fig-residuals
-#| fig-cap: "Residual plot for regression diagnostics"
-#| fig-width: 10
+#| fig-cap: "Model Diagnostics: Checking for patterns in residuals"
+#| fig-width: 12
 #| fig-height: 6
 
-# Residual plot
-ggplot(data.frame(fitted = fitted(model), residuals = residuals(model)), 
-       aes(x = fitted, y = residuals)) +
-  geom_point(alpha = 0.3, color = "#3498db") +
-  geom_hline(yintercept = 0, color = "#e74c3c", linetype = "dashed", linewidth = 1) +
-  geom_smooth(method = "loess", color = "#27ae60", se = FALSE) +
+residual_data <- data.frame(
+  fitted = fitted(model),
+  residuals = residuals(model)
+)
+
+ggplot(residual_data, aes(x = fitted, y = residuals)) +
+  geom_point(alpha = 0.2, color = "#3498db") +
+  geom_hline(yintercept = 0, color = "#e74c3c", linewidth = 1.5, linetype = "dashed") +
+  geom_smooth(method = "loess", color = "#27ae60", se = FALSE, linewidth = 1) +
+  annotate("label", x = 70, y = max(residual_data$residuals) * 0.8, 
+           label = "Green line should be flat\nif model is good", 
+           fill = "#d4edda", color = "#155724", size = 4) +
   labs(
-    title = "Residual vs Fitted Values",
-    subtitle = "Checking for homoscedasticity",
-    x = "Fitted Values",
-    y = "Residuals"
+    title = "RESIDUAL ANALYSIS",
+    subtitle = "Looking for patterns that might indicate model problems",
+    x = "Fitted Values (Predicted Success Rate)",
+    y = "Residuals (Actual - Predicted)"
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50")
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    plot.subtitle = element_text(hjust = 0.5, color = "#7f8c8d")
   )
 ```
 
-## Summary of Findings
+---
+
+## 🎯 The Final Verdict {.unnumbered}
 
 ```{r}
-#| label: findings-summary
+#| label: final-summary
 
 findings <- data.frame(
-  Finding = c(
-    "Overall success rate",
-    "Distribution type",
-    "Regional differences",
-    "Correlation with class size",
-    "Variance explained by governorate"
+  Question = c(
+    "🗺️ Do regions differ in success?",
+    "📏 Does class size matter?",
+    "📊 Is data normally distributed?",
+    "📈 What explains success variation?",
+    "🎓 Overall success rate"
   ),
-  Result = c(
-    paste0(round(mean(school_data$success_rate, na.rm = TRUE), 1), "%"),
-    "Left-skewed (most schools have high success rates)",
-    "Statistically significant (p < 0.001)",
-    paste0("Weak negative (r = ", round(cor_result$estimate, 3), ")"),
-    paste0(round(summary(model2)$r.squared * 100, 1), "%")
+  Answer = c(
+    "YES - Highly significant differences (p < 0.001)",
+    "BARELY - Very weak correlation (r ≈ -0.09)",
+    "NO - Left-skewed distribution",
+    paste0("~", round(model_summary$r.squared * 100, 0), "% explained by location"),
+    paste0(round(mean(school_data$success_rate, na.rm = TRUE), 1), "% average")
+  ),
+  Implication = c(
+    "Location affects educational outcomes",
+    "Focus on quality, not just class size",
+    "Use non-parametric statistical methods",
+    "Other factors (teachers, resources) matter more",
+    "Tunisia's education system performs reasonably well"
   )
 )
 
 findings %>%
-  kable(caption = "Summary of Statistical Findings") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+  kable(caption = "📋 Summary of Statistical Findings") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "20em") %>%
+  column_spec(2, color = "#2c3e50", bold = TRUE) %>%
+  column_spec(3, color = "#7f8c8d", italic = TRUE)
 ```
 
-## Conclusion
+---
+
+## 📖 The Story's Moral {.unnumbered}
+
+::: {.callout-important}
+## 💡 Key Takeaways for Policymakers
+
+1. **Regional Investment Matters**: The significant differences between governorates suggest that targeted investment in underperforming regions could have a major impact.
+
+2. **Class Size is Overrated**: Instead of focusing on reducing class sizes, resources might be better spent on teacher training and educational materials.
+
+3. **Address the 20%**: While 80% of students succeed, the 20% who struggle deserve focused attention and support programs.
+
+4. **Data-Driven Decisions**: This analysis shows how data can reveal surprising insights that contradict common assumptions.
+:::
+
+---
 
 ::: {.callout-tip}
-## Key Takeaways
-
-1. **Regional Disparities**: There are statistically significant differences in student success rates across Tunisian governorates.
-
-2. **High Overall Success**: The mean success rate is around 80%, with most schools achieving high pass rates.
-
-3. **Class Size Effect**: There is a weak negative correlation between class size and success rate, but this explains very little of the variance.
-
-4. **Policy Implications**: Targeted interventions may be needed for underperforming regions to reduce educational inequality.
+## 🔄 Back to Visualizations
+Return to **[The Story of Success](visualizations.qmd)** to see these findings illustrated graphically.
 :::

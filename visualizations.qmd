@@ -1,6 +1,6 @@
 ---
-title: "Data Visualizations"
-subtitle: "Visual Analysis of Tunisia Schools Success Rates"
+title: "The Story of Success"
+subtitle: "Unveiling Educational Patterns Across Tunisia"
 ---
 
 ```{r}
@@ -16,311 +16,362 @@ library(scales)
 
 # Load the data
 source("R/load_data.R")
+
+# Calculate key metrics
+total_students <- sum(school_data$nb_students, na.rm = TRUE)
+total_passed <- sum(school_data$nb_passed, na.rm = TRUE)
+total_failed <- sum(school_data$nb_failed, na.rm = TRUE)
+overall_rate <- round((total_passed / total_students) * 100, 1)
 ```
 
-## Success Rates Overview
+## Chapter 1: The Big Picture {.unnumbered}
 
-### Distribution of Success Rates
+::: {.callout-tip appearance="simple"}
+## 🎯 The Central Question
+**What determines whether a Tunisian student succeeds?** Is it where they live? The level they're studying? Or something else entirely?
+:::
+
+Imagine **`r format(total_students, big.mark = ",")`** students across Tunisia, each with dreams and aspirations. Every year, they face the challenge of passing their academic year. 
+
+> **The verdict?** `r format(total_passed, big.mark = ",")` students succeeded, while `r format(total_failed, big.mark = ",")` faced setbacks.
 
 ```{r}
-#| label: fig-distribution
-#| fig-cap: "Distribution of success rates across all schools and levels"
+#| label: fig-hero
+#| fig-cap: "The Tale of Two Outcomes: Success vs. Struggle"
 #| fig-width: 10
 #| fig-height: 6
 
-ggplot(school_data, aes(x = success_rate)) +
-  geom_histogram(aes(y = after_stat(density)), binwidth = 5, 
-                 fill = "#3498db", color = "white", alpha = 0.8) +
-  geom_density(color = "#e74c3c", linewidth = 1.2) +
-  geom_vline(aes(xintercept = mean(success_rate, na.rm = TRUE)), 
-             color = "#2c3e50", linetype = "dashed", linewidth = 1) +
-  annotate("text", x = mean(school_data$success_rate, na.rm = TRUE) + 5, 
-           y = 0.035, label = paste("Mean:", round(mean(school_data$success_rate, na.rm = TRUE), 1), "%"),
-           color = "#2c3e50", fontface = "bold") +
+# Create dramatic visualization
+outcome_data <- data.frame(
+  status = c("SUCCESS", "STRUGGLE"),
+  count = c(total_passed, total_failed),
+  color = c("#27ae60", "#e74c3c")
+)
+
+outcome_data <- outcome_data %>%
+  mutate(
+    pct = round(count / sum(count) * 100, 1),
+    label = paste0(format(count, big.mark = ","), "\n(", pct, "%)")
+  )
+
+ggplot(outcome_data, aes(x = status, y = count, fill = status)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = label), vjust = -0.3, size = 6, fontface = "bold") +
+  scale_fill_manual(values = c("SUCCESS" = "#27ae60", "STRUGGLE" = "#e74c3c")) +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.15))) +
   labs(
-    title = "Distribution of Student Success Rates",
-    subtitle = "Histogram with density curve overlay",
-    x = "Success Rate (%)",
-    y = "Density"
+    title = "THE VERDICT",
+    subtitle = paste0("Overall Success Rate: ", overall_rate, "%"),
+    x = "",
+    y = "Number of Students"
   ) +
-  theme_minimal(base_size = 14) +
+  theme_minimal(base_size = 16) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50")
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 28, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, size = 18, color = "#7f8c8d"),
+    axis.text.x = element_text(size = 18, face = "bold"),
+    panel.grid.major.x = element_blank()
   )
 ```
 
-### Box Plot of Success Rates
+---
+
+## Chapter 2: A Nation Divided? {.unnumbered}
+
+::: {.callout-warning appearance="simple"}
+## 🗺️ The Geography of Success
+Does where you study determine your future? Let's explore the regional disparities.
+:::
+
+Tunisia's 24 governorates tell vastly different stories. Some regions shine as beacons of academic excellence, while others struggle to keep pace.
 
 ```{r}
-#| label: fig-boxplot
-#| fig-cap: "Box plot showing the spread of success rates"
-#| fig-width: 8
-#| fig-height: 5
-
-ggplot(school_data, aes(y = success_rate, x = "")) +
-  geom_boxplot(fill = "#3498db", color = "#2c3e50", alpha = 0.7, width = 0.5) +
-  geom_jitter(alpha = 0.1, width = 0.2, color = "#e74c3c") +
-  labs(
-    title = "Box Plot of Success Rates",
-    subtitle = "Points show individual school-level records",
-    y = "Success Rate (%)",
-    x = ""
-  ) +
-  coord_flip() +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50")
-  )
-```
-
-## Regional Analysis
-
-### Success Rates by Governorate
-
-```{r}
-#| label: fig-governorate-bar
-#| fig-cap: "Average success rates by governorate"
-#| fig-width: 12
-#| fig-height: 8
+#| label: fig-regional-story
+#| fig-cap: "The Great Divide: Success Rates Across Governorates"
+#| fig-width: 14
+#| fig-height: 10
 
 gov_stats <- summary_by_governorate(school_data)
 
+# Categorize performance
+gov_stats <- gov_stats %>%
+  mutate(
+    performance = case_when(
+      overall_success_rate >= 85 ~ "🌟 Excellence",
+      overall_success_rate >= 75 ~ "✅ Good",
+      overall_success_rate >= 65 ~ "⚠️ Needs Attention",
+      TRUE ~ "🚨 Critical"
+    ),
+    bar_color = case_when(
+      overall_success_rate >= 85 ~ "#27ae60",
+      overall_success_rate >= 75 ~ "#3498db",
+      overall_success_rate >= 65 ~ "#f39c12",
+      TRUE ~ "#e74c3c"
+    )
+  )
+
 ggplot(gov_stats, aes(x = reorder(governorate, overall_success_rate), y = overall_success_rate)) +
-  geom_col(aes(fill = overall_success_rate), show.legend = FALSE) +
+  geom_segment(aes(xend = governorate, yend = 0), color = "gray80", linewidth = 2) +
+  geom_point(aes(color = bar_color), size = 8, show.legend = FALSE) +
   geom_text(aes(label = paste0(overall_success_rate, "%")), 
-            hjust = -0.1, size = 3.5, fontface = "bold") +
-  scale_fill_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60", midpoint = 75) +
-  labs(
-    title = "Success Rates by Governorate",
-    subtitle = "Ordered from lowest to highest success rate",
-    x = "Governorate",
-    y = "Overall Success Rate (%)"
-  ) +
+            hjust = -0.5, size = 4, fontface = "bold") +
+  geom_hline(yintercept = 75, linetype = "dashed", color = "#e74c3c", linewidth = 1) +
+  annotate("text", x = 3, y = 77, label = "← National Target: 75%", 
+           color = "#e74c3c", fontface = "italic", size = 4) +
+  scale_color_identity() +
   coord_flip() +
-  ylim(0, 105) +
-  theme_minimal(base_size = 12) +
+  ylim(0, 100) +
+  labs(
+    title = "REGIONAL PERFORMANCE RANKING",
+    subtitle = "Which governorates lead? Which ones need support?",
+    x = "",
+    y = "Success Rate (%)"
+  ) +
+  theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50"),
-    axis.text.y = element_text(size = 10)
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
+    axis.text.y = element_text(size = 11, face = "bold")
   )
 ```
 
-### Number of Students by Governorate
+### 🏆 The Champions vs 🆘 The Challengers
 
 ```{r}
-#| label: fig-students-governorate
-#| fig-cap: "Total number of students by governorate"
-#| fig-width: 12
-#| fig-height: 8
+#| label: champions-challengers
 
-ggplot(gov_stats, aes(x = reorder(governorate, total_students), y = total_students)) +
-  geom_col(fill = "#3498db", alpha = 0.8) +
-  geom_text(aes(label = format(total_students, big.mark = ",")), 
-            hjust = -0.1, size = 3, fontface = "bold") +
-  scale_y_continuous(labels = comma) +
-  labs(
-    title = "Total Number of Students by Governorate",
-    subtitle = "Distribution of student population across regions",
-    x = "Governorate",
-    y = "Total Students"
-  ) +
-  coord_flip() +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50")
-  )
+# Top 3 and Bottom 3
+top_3 <- gov_stats %>% arrange(desc(overall_success_rate)) %>% head(3)
+bottom_3 <- gov_stats %>% arrange(overall_success_rate) %>% head(3)
+
+cat("🏆 TOP PERFORMING GOVERNORATES:\n")
+for(i in 1:3) {
+  cat(paste0("   ", i, ". ", top_3$governorate[i], " - ", top_3$overall_success_rate[i], "%\n"))
+}
+
+cat("\n🆘 GOVERNORATES NEEDING SUPPORT:\n")
+for(i in 1:3) {
+  cat(paste0("   ", i, ". ", bottom_3$governorate[i], " - ", bottom_3$overall_success_rate[i], "%\n"))
+}
+
+gap <- max(gov_stats$overall_success_rate) - min(gov_stats$overall_success_rate)
+cat(paste0("\n📊 THE GAP: ", round(gap, 1), " percentage points between best and worst performing regions"))
 ```
 
-## Educational Level Analysis
+::: {.callout-important}
+## 💡 Key Insight
+A student in **`r top_3$governorate[1]`** has a significantly higher chance of success than one in **`r bottom_3$governorate[1]`**. This `r round(gap, 1)`-point gap represents thousands of students whose outcomes may be influenced by geography alone.
+:::
 
-### Success Rates by Level
+---
+
+## Chapter 3: The Level Effect {.unnumbered}
+
+::: {.callout-note appearance="simple"}
+## 📚 Does difficulty increase with level?
+We often assume higher levels are harder. But is this true in Tunisia?
+:::
 
 ```{r}
-#| label: fig-level-bar
-#| fig-cap: "Success rates by educational level"
+#| label: fig-level-pyramid
+#| fig-cap: "The Educational Ladder: Success at Every Rung"
 #| fig-width: 12
 #| fig-height: 8
 
 level_stats <- summary_by_level(school_data)
 
+# Create level categories
+level_stats <- level_stats %>%
+  mutate(
+    difficulty = case_when(
+      overall_success_rate >= 90 ~ "Achievable",
+      overall_success_rate >= 80 ~ "Moderate",
+      overall_success_rate >= 70 ~ "Challenging",
+      TRUE ~ "Very Challenging"
+    )
+  )
+
 ggplot(level_stats, aes(x = reorder(level_name, overall_success_rate), y = overall_success_rate)) +
-  geom_col(aes(fill = overall_success_rate), show.legend = FALSE) +
+  geom_col(aes(fill = overall_success_rate), show.legend = FALSE, width = 0.7) +
   geom_text(aes(label = paste0(overall_success_rate, "%")), 
-            hjust = -0.1, size = 3.5, fontface = "bold") +
+            hjust = -0.2, size = 4, fontface = "bold", color = "#2c3e50") +
   scale_fill_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60", midpoint = 80) +
-  labs(
-    title = "Success Rates by Educational Level",
-    subtitle = "Comparing success across different school levels",
-    x = "Educational Level",
-    y = "Overall Success Rate (%)"
-  ) +
   coord_flip() +
   ylim(0, 105) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50")
-  )
-```
-
-### Student Count by Level
-
-```{r}
-#| label: fig-students-level
-#| fig-cap: "Number of students by educational level"
-#| fig-width: 10
-#| fig-height: 8
-
-ggplot(level_stats, aes(x = reorder(level_name, total_students), y = total_students)) +
-  geom_segment(aes(xend = level_name, yend = 0), color = "gray70", linewidth = 1) +
-  geom_point(size = 4, color = "#3498db") +
-  geom_text(aes(label = format(total_students, big.mark = ",")), 
-            hjust = -0.3, size = 3) +
-  scale_y_continuous(labels = comma) +
   labs(
-    title = "Student Distribution by Educational Level",
-    subtitle = "Lollipop chart showing student counts",
-    x = "Educational Level",
-    y = "Total Students"
+    title = "SUCCESS BY EDUCATIONAL LEVEL",
+    subtitle = "Some rungs of the ladder are harder to climb",
+    x = "",
+    y = "Success Rate (%)"
   ) +
-  coord_flip() +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50")
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 20, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d")
   )
 ```
 
-## Comparison Charts
+---
 
-### Governorate Performance Heatmap
+## Chapter 4: The Hidden Patterns {.unnumbered}
+
+::: {.callout-tip appearance="simple"}
+## 🔍 Deep Dive: What the heatmap reveals
+Combining region and level tells a more complete story.
+:::
 
 ```{r}
-#| label: fig-heatmap
-#| fig-cap: "Heatmap of success rates by governorate and level type"
-#| fig-width: 12
-#| fig-height: 10
+#| label: fig-heatmap-story
+#| fig-cap: "The Full Picture: Region × Level Performance Matrix"
+#| fig-width: 14
+#| fig-height: 12
 
 # Create level categories
-school_data_categorized <- school_data %>%
+school_data_cat <- school_data %>%
   mutate(
-    level_category = case_when(
-      str_detect(level_name, "سابعة|ثامنة|تاسعة") ~ "Middle School",
-      str_detect(level_name, "أولى ثانوي") ~ "1st Year Secondary",
-      str_detect(level_name, "ثانية") ~ "2nd Year Secondary",
-      str_detect(level_name, "ثالثة") ~ "3rd Year Secondary",
+    level_cat = case_when(
+      str_detect(level_name, "سابعة") ~ "7th Year",
+      str_detect(level_name, "ثامنة") ~ "8th Year",
+      str_detect(level_name, "تاسعة") ~ "9th Year",
+      str_detect(level_name, "أولى ثانوي") ~ "1st Secondary",
+      str_detect(level_name, "ثانية") ~ "2nd Secondary",
+      str_detect(level_name, "ثالثة") ~ "3rd Secondary",
       TRUE ~ "Other"
     )
   )
 
-heatmap_data <- school_data_categorized %>%
-  filter(!is.na(governorate)) %>%
-  group_by(governorate, level_category) %>%
+heatmap_data <- school_data_cat %>%
+  filter(!is.na(governorate), level_cat != "Other") %>%
+  group_by(governorate, level_cat) %>%
   summarise(
-    avg_rate = mean(success_rate, na.rm = TRUE),
+    avg_rate = round(mean(success_rate, na.rm = TRUE), 1),
     .groups = "drop"
   )
 
-ggplot(heatmap_data, aes(x = level_category, y = governorate, fill = avg_rate)) +
-  geom_tile(color = "white", linewidth = 0.5) +
-  geom_text(aes(label = round(avg_rate, 1)), size = 3, color = "white", fontface = "bold") +
+ggplot(heatmap_data, aes(x = level_cat, y = reorder(governorate, avg_rate), fill = avg_rate)) +
+  geom_tile(color = "white", linewidth = 1) +
+  geom_text(aes(label = avg_rate, 
+                color = ifelse(avg_rate > 75, "white", "black")), 
+            size = 3.5, fontface = "bold") +
   scale_fill_gradient2(
-    low = "#e74c3c", 
+    low = "#c0392b", 
     mid = "#f39c12", 
     high = "#27ae60", 
     midpoint = 75,
-    name = "Success Rate (%)"
+    name = "Success\nRate (%)"
   ) +
+  scale_color_identity() +
   labs(
-    title = "Success Rate Heatmap",
-    subtitle = "Comparing success rates across governorates and education levels",
-    x = "Level Category",
+    title = "PERFORMANCE HEATMAP",
+    subtitle = "Dark red = struggle | Yellow = moderate | Green = success",
+    x = "Educational Level",
     y = "Governorate"
   ) +
   theme_minimal(base_size = 12) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
-    plot.subtitle = element_text(hjust = 0.5, color = "gray50"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 20, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12, color = "#7f8c8d"),
+    axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"),
+    axis.text.y = element_text(face = "bold"),
     legend.position = "right"
   )
 ```
 
-### Passed vs Failed Students
+---
+
+## Chapter 5: The Distribution Story {.unnumbered}
 
 ```{r}
-#| label: fig-pie
-#| fig-cap: "Overall distribution of passed vs failed students"
-#| fig-width: 8
-#| fig-height: 6
+#| label: fig-distribution-story
+#| fig-cap: "Where Do Most Schools Fall?"
+#| fig-width: 12
+#| fig-height: 7
 
-overall <- data.frame(
-  status = c("Passed", "Failed"),
-  count = c(sum(school_data$nb_passed), sum(school_data$nb_failed)),
-  stringsAsFactors = FALSE
-)
+mean_rate <- mean(school_data$success_rate, na.rm = TRUE)
+median_rate <- median(school_data$success_rate, na.rm = TRUE)
 
-overall <- overall %>%
-  mutate(
-    percentage = round(count / sum(count) * 100, 1),
-    label = paste0(status, "\n", format(count, big.mark = ","), "\n(", percentage, "%)")
-  )
-
-ggplot(overall, aes(x = "", y = count, fill = status)) +
-  geom_col(width = 1, color = "white") +
-  coord_polar(theta = "y") +
-  geom_text(aes(label = label), position = position_stack(vjust = 0.5), 
-            color = "white", fontface = "bold", size = 5) +
-  scale_fill_manual(values = c("Failed" = "#e74c3c", "Passed" = "#27ae60")) +
+ggplot(school_data, aes(x = success_rate)) +
+  geom_histogram(aes(y = after_stat(count)), binwidth = 5, 
+                 fill = "#3498db", color = "white", alpha = 0.8) +
+  geom_vline(xintercept = mean_rate, color = "#e74c3c", linewidth = 1.5, linetype = "solid") +
+  geom_vline(xintercept = 50, color = "#2c3e50", linewidth = 1, linetype = "dashed") +
+  annotate("label", x = mean_rate + 8, y = 800, 
+           label = paste0("Mean: ", round(mean_rate, 1), "%"), 
+           fill = "#e74c3c", color = "white", fontface = "bold", size = 5) +
+  annotate("label", x = 50, y = 600, 
+           label = "Passing Line: 50%", 
+           fill = "#2c3e50", color = "white", fontface = "bold", size = 4) +
   labs(
-    title = "Overall Student Success Distribution",
-    fill = "Status"
+    title = "THE BELL CURVE OF SUCCESS",
+    subtitle = "Most schools cluster around high success rates - a positive sign!",
+    x = "Success Rate (%)",
+    y = "Number of Schools"
   ) +
-  theme_void(base_size = 14) +
+  theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
-    legend.position = "none"
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d")
   )
 ```
 
-## Top and Bottom Performers
+::: {.callout-note}
+## 📊 What This Tells Us
+The distribution is **left-skewed** - meaning most schools achieve HIGH success rates. This is encouraging! However, the long tail to the left shows that some schools are struggling significantly.
+:::
 
-### Top 10 Schools
+---
 
-```{r}
-#| label: top-schools
+## Chapter 6: Heroes & Underdogs {.unnumbered}
 
-top_10 <- top_schools(school_data, 10)
+### 🌟 The Top Performers
 
-top_10 %>%
-  kable(
-    col.names = c("School Name", "Governorate", "Level", "Students", "Passed", "Success Rate (%)"),
-    caption = "Top 10 Performing Schools (minimum 30 students)"
-  ) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, background = "#27ae60", color = "white")
-```
-
-### Bottom 10 Schools
+These schools achieved near-perfect success rates while educating significant numbers of students:
 
 ```{r}
-#| label: bottom-schools
+#| label: heroes
 
-bottom_10 <- bottom_schools(school_data, 10)
+top_performers <- school_data %>%
+  filter(nb_students >= 50) %>%
+  arrange(desc(success_rate), desc(nb_students)) %>%
+  head(10) %>%
+  select(school_name, governorate, level_name, nb_students, success_rate)
 
-bottom_10 %>%
+top_performers %>%
   kable(
-    col.names = c("School Name", "Governorate", "Level", "Students", "Passed", "Success Rate (%)"),
-    caption = "Bottom 10 Performing Schools (minimum 30 students)"
+    col.names = c("🏫 School", "📍 Governorate", "📚 Level", "👥 Students", "✅ Success %"),
+    caption = "🏆 Top 10 High-Volume High-Performing Schools"
   ) %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, background = "#e74c3c", color = "white")
+  row_spec(1:3, bold = TRUE, background = "#d4edda")
 ```
 
-## Next Steps
+### 🆘 Schools Needing Support
 
-Continue to **[Statistical Analysis](statistics.qmd)** for hypothesis testing and deeper statistical insights.
+These schools have room for improvement and could benefit from targeted interventions:
+
+```{r}
+#| label: underdogs
+
+struggling <- school_data %>%
+  filter(nb_students >= 50) %>%
+  arrange(success_rate) %>%
+  head(10) %>%
+  select(school_name, governorate, level_name, nb_students, success_rate)
+
+struggling %>%
+  kable(
+    col.names = c("🏫 School", "📍 Governorate", "📚 Level", "👥 Students", "⚠️ Success %"),
+    caption = "🆘 Schools That Could Benefit from Additional Support"
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  row_spec(1:3, bold = TRUE, background = "#f8d7da")
+```
+
+---
+
+## The Story Continues... {.unnumbered}
+
+::: {.callout-tip}
+## 📖 Next Chapter
+Head to **[Statistical Analysis](statistics.qmd)** to discover the mathematical evidence behind these patterns and test our hypotheses rigorously.
+:::
