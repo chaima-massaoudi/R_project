@@ -1,0 +1,98 @@
+---
+title: "Tunisia Schools Success Rate Analysis"
+subtitle: "A comprehensive analysis of student success rates across Tunisian educational institutions"
+author: "Chaima Massaoudi"
+date: "2026-01-05"
+---
+
+## Welcome {.unnumbered}
+
+This project presents a comprehensive analysis of **student success rates** across schools in Tunisia. The dataset contains information about all educational levels, including:
+
+- Number of students enrolled per school and level
+- Number of students who successfully passed
+- Success rates calculated and compared across regions
+
+## Project Overview
+
+::: {.callout-note}
+## About the Data
+The dataset `liste_reussite_eleves.xls` contains **7,787 records** from **1,453 schools** covering **24 governorates** in Tunisia.
+:::
+
+### Key Features
+
+This analysis includes:
+
+1. **Data Preprocessing**: Adding success rate percentages and mapping governorates
+2. **Exploratory Data Analysis**: Understanding the distribution of success rates
+3. **Visualizations**: Interactive charts and maps showing regional differences
+4. **Statistical Analysis**: Identifying patterns and significant differences
+
+## Quick Statistics
+
+```{r}
+#| label: quick-stats
+#| echo: false
+
+# Load the data
+.libPaths(Sys.getenv("R_LIBS_USER"))
+source("R/load_data.R")
+
+# Calculate summary statistics
+total_students <- sum(school_data$nb_students, na.rm = TRUE)
+total_passed <- sum(school_data$nb_passed, na.rm = TRUE)
+overall_rate <- round((total_passed / total_students) * 100, 2)
+n_schools <- n_distinct(school_data$school_code)
+n_governorates <- n_distinct(school_data$governorate)
+```
+
+| Metric | Value |
+|--------|-------|
+| Total Students | `r format(total_students, big.mark = ",")` |
+| Total Passed | `r format(total_passed, big.mark = ",")` |
+| Overall Success Rate | `r overall_rate`% |
+| Number of Schools | `r n_schools` |
+| Number of Governorates | `r n_governorates` |
+
+## Project Structure
+
+```
+R_project/
+├── _quarto.yml          # Quarto configuration
+├── index.qmd            # This homepage
+├── data_exploration.qmd # Data exploration lab
+├── visualizations.qmd   # Data visualizations
+├── statistics.qmd       # Statistical analysis
+├── R/
+│   └── load_data.R      # Data loading and preprocessing
+├── data/
+│   └── liste_reussite_eleves.xls  # Raw data
+├── img/                 # Saved plots and figures
+└── styles.css           # Custom styling
+```
+
+## Navigation
+
+Use the navigation bar above to explore different sections:
+
+- **[Data Exploration](data_exploration.qmd)**: Understand the structure and characteristics of the data
+- **[Visualizations](visualizations.qmd)**: View charts and graphs of success rates
+- **[Statistical Analysis](statistics.qmd)**: Dive into statistical tests and insights
+
+## Technologies Used
+
+This project was built using:
+
+- **R** for data analysis and visualization
+- **Quarto** for creating this interactive website
+- **ggplot2** for creating beautiful charts
+- **dplyr** for data manipulation
+- **kableExtra** for formatted tables
+
+---
+
+::: {.callout-tip}
+## Getting Started
+Click on "Data Exploration" in the navigation bar to begin exploring the dataset!
+:::

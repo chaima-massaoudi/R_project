@@ -1,0 +1,189 @@
+---
+title: "Data Exploration"
+subtitle: "Understanding the Tunisia Schools Dataset"
+---
+
+## Loading the Data
+
+First, let's load our preprocessed dataset and explore its structure.
+
+```{r}
+#| label: load-data
+#| message: false
+#| warning: false
+
+# Set library path and load packages
+.libPaths(Sys.getenv("R_LIBS_USER"))
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# Load the data
+source("R/load_data.R")
+```
+
+## Dataset Structure
+
+The dataset contains information about student success rates across Tunisian schools.
+
+```{r}
+#| label: data-structure
+
+# Display structure
+cat("Dataset dimensions:", nrow(school_data), "rows x", ncol(school_data), "columns\n\n")
+cat("Column names and types:\n")
+glimpse(school_data)
+```
+
+## Column Descriptions
+
+| Column | Description | Type |
+|--------|-------------|------|
+| `school_code` | Unique identifier for each school | Numeric |
+| `school_name` | Name of the school (in Arabic) | Character |
+| `level_code` | Code representing the educational level | Numeric |
+| `level_name` | Name of the educational level | Character |
+| `nb_students` | Number of enrolled students | Numeric |
+| `nb_passed` | Number of students who passed | Numeric |
+| `governorate_code` | Code for the governorate | Numeric |
+| `governorate` | Name of the governorate (English) | Character |
+| `governorate_ar` | Name of the governorate (Arabic) | Character |
+| `success_rate` | Percentage of students who passed | Numeric |
+| `nb_failed` | Number of students who failed | Numeric |
+
+## Sample Data
+
+Here are the first 20 rows of our preprocessed dataset:
+
+```{r}
+#| label: sample-data
+
+school_data %>%
+  head(20) %>%
+  select(school_name, governorate, level_name, nb_students, nb_passed, success_rate) %>%
+  kable(
+    col.names = c("School Name", "Governorate", "Level", "Students", "Passed", "Success Rate (%)"),
+    caption = "Sample of preprocessed school data"
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+## Summary Statistics
+
+### Overall Statistics
+
+```{r}
+#| label: overall-stats
+
+# Calculate overall statistics
+overall_stats <- school_data %>%
+  summarise(
+    `Total Records` = n(),
+    `Unique Schools` = n_distinct(school_code),
+    `Unique Levels` = n_distinct(level_code),
+    `Total Students` = sum(nb_students, na.rm = TRUE),
+    `Total Passed` = sum(nb_passed, na.rm = TRUE),
+    `Total Failed` = sum(nb_failed, na.rm = TRUE),
+    `Min Success Rate` = min(success_rate, na.rm = TRUE),
+    `Max Success Rate` = max(success_rate, na.rm = TRUE),
+    `Mean Success Rate` = round(mean(success_rate, na.rm = TRUE), 2),
+    `Median Success Rate` = round(median(success_rate, na.rm = TRUE), 2)
+  )
+
+overall_stats %>%
+  pivot_longer(everything(), names_to = "Statistic", values_to = "Value") %>%
+  kable(caption = "Overall Dataset Statistics") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+### Success Rate Distribution
+
+```{r}
+#| label: success-distribution
+#| fig-width: 10
+#| fig-height: 6
+
+ggplot(school_data, aes(x = success_rate)) +
+  geom_histogram(binwidth = 5, fill = "#3498db", color = "white", alpha = 0.7) +
+  geom_vline(aes(xintercept = mean(success_rate, na.rm = TRUE)), 
+             color = "#e74c3c", linetype = "dashed", linewidth = 1) +
+  labs(
+    title = "Distribution of Success Rates",
+    subtitle = "Red dashed line shows the mean success rate",
+    x = "Success Rate (%)",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12, color = "gray50")
+  )
+```
+
+## By Governorate
+
+### Number of Schools per Governorate
+
+```{r}
+#| label: schools-by-governorate
+
+gov_summary <- school_data %>%
+  group_by(governorate) %>%
+  summarise(
+    `Number of Schools` = n_distinct(school_code),
+    `Total Students` = sum(nb_students, na.rm = TRUE),
+    `Total Passed` = sum(nb_passed, na.rm = TRUE),
+    `Average Success Rate` = round(mean(success_rate, na.rm = TRUE), 2)
+  ) %>%
+  arrange(desc(`Average Success Rate`))
+
+gov_summary %>%
+  kable(caption = "Summary Statistics by Governorate") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
+  row_spec(1:3, bold = TRUE, color = "white", background = "#27ae60") %>%
+  row_spec((nrow(gov_summary)-2):nrow(gov_summary), bold = TRUE, color = "white", background = "#e74c3c")
+```
+
+::: {.callout-note}
+**Observation**: The table above highlights the top 3 performing governorates in green and the bottom 3 in red.
+:::
+
+## By Educational Level
+
+### Success Rates by Level
+
+```{r}
+#| label: by-level
+
+level_summary <- summary_by_level(school_data)
+
+level_summary %>%
+  select(level_name, total_students, total_passed, overall_success_rate) %>%
+  kable(
+    col.names = c("Level", "Total Students", "Total Passed", "Overall Success Rate (%)"),
+    caption = "Success Rates by Educational Level"
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+## Missing Values Analysis
+
+```{r}
+#| label: missing-values
+
+# Check for missing values
+missing_summary <- school_data %>%
+  summarise(across(everything(), ~sum(is.na(.)))) %>%
+  pivot_longer(everything(), names_to = "Column", values_to = "Missing Count")
+
+missing_summary %>%
+  kable(caption = "Missing Values by Column") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+## Next Steps
+
+Now that we understand our data, let's proceed to:
+
+1. **[Visualizations](visualizations.qmd)**: Create informative charts and graphs
+2. **[Statistical Analysis](statistics.qmd)**: Perform statistical tests and modeling

@@ -1,0 +1,43 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Tunisia Schools Success Rate Analysis"
+  description: "Analysis of student success rates across Tunisian schools by governorate and level"
+  navbar:
+    background: primary
+    left:
+      - href: index.qmd
+        text: Home
+      - href: data_exploration.qmd
+        text: Data Exploration
+      - href: visualizations.qmd
+        text: Visualizations
+      - href: statistics.qmd
+        text: Statistical Analysis
+    right:
+      - icon: github
+        href: https://github.com/chaima-massaoudi/R_project
+  page-footer:
+    center: "Tunisia Schools Analysis Project - 2026"
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show code"
+    highlight-style: github
+    
+execute:
+  warning: false
+  message: false
+  echo: true
+
+bibliography: bib.bib
+csl: apa.csl
+
+lang: en

@@ -1,0 +1,155 @@
+/* Tunisia Schools Analysis - Custom Styles */
+
+/* Main body styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+}
+
+/* Header styling */
+h1, h2, h3, h4, h5, h6 {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+h1 {
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 10px;
+}
+
+/* Navbar customization */
+.navbar {
+  background: linear-gradient(135deg, #c8102e 0%, #1e3a5f 100%) !important;
+}
+
+.navbar-brand {
+  font-weight: bold;
+}
+
+/* Cards and containers */
+.card {
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+th {
+  background-color: #3498db;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* Code blocks */
+pre {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 5px;
+  padding: 15px;
+}
+
+code {
+  color: #c7254e;
+  background-color: #f9f2f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Figures and plots */
+.cell-output-display {
+  margin: 20px 0;
+  text-align: center;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+}
+
+/* Statistics callouts */
+.callout {
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.callout-note {
+  border-left: 4px solid #3498db;
+}
+
+.callout-warning {
+  border-left: 4px solid #f39c12;
+}
+
+.callout-important {
+  border-left: 4px solid #e74c3c;
+}
+
+/* Footer */
+.page-footer {
+  background-color: #2c3e50;
+  color: white;
+  padding: 20px;
+  margin-top: 40px;
+}
+
+/* Arabic text support */
+[lang="ar"] {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Sans Arabic', 'Segoe UI', sans-serif;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  
+  table {
+    font-size: 14px;
+  }
+}
+
+/* Success rate color coding */
+.success-high {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.success-medium {
+  color: #f39c12;
+  font-weight: bold;
+}
+
+.success-low {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+/* Governorate badges */
+.governorate-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 15px;
+  background-color: #3498db;
+  color: white;
+  font-size: 12px;
+  margin: 2px;
+}
