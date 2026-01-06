@@ -1,189 +1,196 @@
 ---
-title: "Data Exploration"
-subtitle: "Understanding the Tunisia Schools Dataset"
+title: "استكشاف البيانات"
+subtitle: "فهم قاعدة بيانات المدارس التونسية"
 ---
 
-## Loading the Data
+## تحميل البيانات
 
-First, let's load our preprocessed dataset and explore its structure.
+أولاً، نقوم بتحميل مجموعة البيانات المعالجة واستكشاف بنيتها.
 
 ```{r}
 #| label: load-data
 #| message: false
 #| warning: false
 
-# Set library path and load packages
+# تعيين مسار المكتبات وتحميل الحزم
 .libPaths(Sys.getenv("R_LIBS_USER"))
 library(tidyverse)
 library(knitr)
 library(kableExtra)
 
-# Load the data
+# تحميل البيانات
 source("R/load_data.R")
 ```
 
-## Dataset Structure
+## بنية قاعدة البيانات
 
-The dataset contains information about student success rates across Tunisian schools.
+تحتوي قاعدة البيانات على معلومات حول نسب نجاح التلاميذ عبر المدارس التونسية.
 
 ```{r}
 #| label: data-structure
 
-# Display structure
-cat("Dataset dimensions:", nrow(school_data), "rows x", ncol(school_data), "columns\n\n")
-cat("Column names and types:\n")
+# عرض البنية
+cat("أبعاد البيانات:", nrow(school_data), "صف ×", ncol(school_data), "عمود\n\n")
+cat("أسماء الأعمدة وأنواعها:\n")
 glimpse(school_data)
 ```
 
-## Column Descriptions
+## وصف الأعمدة
 
-| Column | Description | Type |
-|--------|-------------|------|
-| `school_code` | Unique identifier for each school | Numeric |
-| `school_name` | Name of the school (in Arabic) | Character |
-| `level_code` | Code representing the educational level | Numeric |
-| `level_name` | Name of the educational level | Character |
-| `nb_students` | Number of enrolled students | Numeric |
-| `nb_passed` | Number of students who passed | Numeric |
-| `governorate_code` | Code for the governorate | Numeric |
-| `governorate` | Name of the governorate (English) | Character |
-| `governorate_ar` | Name of the governorate (Arabic) | Character |
-| `success_rate` | Percentage of students who passed | Numeric |
-| `nb_failed` | Number of students who failed | Numeric |
+| العمود | الوصف | النوع |
+|--------|-------|------|
+| `school_code` | المعرف الفريد لكل مدرسة | رقمي |
+| `school_name` | اسم المدرسة (بالعربية) | نصي |
+| `level_code` | رمز المستوى التعليمي | رقمي |
+| `level_name` | اسم المستوى التعليمي | نصي |
+| `nb_students` | عدد التلاميذ المسجلين | رقمي |
+| `nb_passed` | عدد التلاميذ الناجحين | رقمي |
+| `governorate` | اسم الولاية (بالإنجليزية) | نصي |
+| `governorate_ar` | اسم الولاية (بالعربية) | نصي |
+| `success_rate` | نسبة النجاح المئوية | رقمي |
+| `nb_failed` | عدد التلاميذ الراسبين | رقمي |
 
-## Sample Data
+## عينة من البيانات
 
-Here are the first 20 rows of our preprocessed dataset:
+إليك أول 20 صفًا من قاعدة البيانات المعالجة:
 
 ```{r}
 #| label: sample-data
 
 school_data %>%
+  select(school_name, level_name, nb_students, nb_passed, success_rate, governorate_ar) %>%
   head(20) %>%
-  select(school_name, governorate, level_name, nb_students, nb_passed, success_rate) %>%
-  kable(
-    col.names = c("School Name", "Governorate", "Level", "Students", "Passed", "Success Rate (%)"),
-    caption = "Sample of preprocessed school data"
-  ) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+  kable(col.names = c("اسم المدرسة", "المستوى", "عدد التلاميذ", "الناجحون", "نسبة النجاح %", "الولاية")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE)
 ```
 
-## Summary Statistics
-
-### Overall Statistics
+## الإحصائيات العامة
 
 ```{r}
 #| label: overall-stats
 
-# Calculate overall statistics
-overall_stats <- school_data %>%
-  summarise(
-    `Total Records` = n(),
-    `Unique Schools` = n_distinct(school_code),
-    `Unique Levels` = n_distinct(level_code),
-    `Total Students` = sum(nb_students, na.rm = TRUE),
-    `Total Passed` = sum(nb_passed, na.rm = TRUE),
-    `Total Failed` = sum(nb_failed, na.rm = TRUE),
-    `Min Success Rate` = min(success_rate, na.rm = TRUE),
-    `Max Success Rate` = max(success_rate, na.rm = TRUE),
-    `Mean Success Rate` = round(mean(success_rate, na.rm = TRUE), 2),
-    `Median Success Rate` = round(median(success_rate, na.rm = TRUE), 2)
-  )
+cat("📊 الإحصائيات العامة:\n")
+cat("═══════════════════════════════════════\n\n")
 
-overall_stats %>%
-  pivot_longer(everything(), names_to = "Statistic", values_to = "Value") %>%
-  kable(caption = "Overall Dataset Statistics") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+total_students <- sum(school_data$nb_students, na.rm = TRUE)
+total_passed <- sum(school_data$nb_passed, na.rm = TRUE)
+total_failed <- sum(school_data$nb_failed, na.rm = TRUE)
+overall_rate <- round(total_passed / total_students * 100, 2)
+
+cat("👥 إجمالي التلاميذ:", format(total_students, big.mark = ","), "\n")
+cat("✅ إجمالي الناجحين:", format(total_passed, big.mark = ","), "\n")
+cat("❌ إجمالي الراسبين:", format(total_failed, big.mark = ","), "\n")
+cat("📈 نسبة النجاح الإجمالية:", overall_rate, "%\n\n")
+
+cat("🏫 عدد المدارس:", n_distinct(school_data$school_code), "\n")
+cat("🗺️ عدد الولايات:", n_distinct(school_data$governorate), "\n")
+cat("📚 عدد المستويات التعليمية:", n_distinct(school_data$level_name), "\n")
 ```
 
-### Success Rate Distribution
+## توزيع نسب النجاح
 
 ```{r}
 #| label: success-distribution
-#| fig-width: 10
+#| fig-cap: "توزيع نسب النجاح عبر المدارس"
+#| fig-width: 12
 #| fig-height: 6
 
 ggplot(school_data, aes(x = success_rate)) +
-  geom_histogram(binwidth = 5, fill = "#3498db", color = "white", alpha = 0.7) +
-  geom_vline(aes(xintercept = mean(success_rate, na.rm = TRUE)), 
-             color = "#e74c3c", linetype = "dashed", linewidth = 1) +
+  geom_histogram(binwidth = 5, fill = "#3498db", color = "white", alpha = 0.8) +
+  geom_vline(xintercept = mean(school_data$success_rate, na.rm = TRUE), 
+             color = "#e74c3c", linetype = "dashed", linewidth = 1.2) +
   labs(
-    title = "Distribution of Success Rates",
-    subtitle = "Red dashed line shows the mean success rate",
-    x = "Success Rate (%)",
-    y = "Frequency"
+    title = "توزيع نسب النجاح",
+    subtitle = "الخط الأحمر يمثل المتوسط",
+    x = "نسبة النجاح (%)",
+    y = "عدد المدارس"
   ) +
-  theme_minimal() +
+  theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    plot.subtitle = element_text(size = 12, color = "gray50")
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, color = "#7f8c8d")
   )
 ```
 
-## By Governorate
-
-### Number of Schools per Governorate
+## نسب النجاح حسب الولاية
 
 ```{r}
-#| label: schools-by-governorate
+#| label: by-governorate
+#| fig-cap: "نسب النجاح حسب الولاية"
+#| fig-width: 14
+#| fig-height: 10
 
+# حساب نسبة النجاح بشكل صحيح
 gov_summary <- school_data %>%
-  group_by(governorate) %>%
+  filter(!is.na(governorate_ar)) %>%
+  group_by(governorate_ar) %>%
   summarise(
-    `Number of Schools` = n_distinct(school_code),
-    `Total Students` = sum(nb_students, na.rm = TRUE),
-    `Total Passed` = sum(nb_passed, na.rm = TRUE),
-    `Average Success Rate` = round(mean(success_rate, na.rm = TRUE), 2)
+    n_schools = n_distinct(school_code),
+    total_students = sum(nb_students),
+    total_passed = sum(nb_passed),
+    success_rate = round(total_passed / total_students * 100, 1),
+    .groups = "drop"
   ) %>%
-  arrange(desc(`Average Success Rate`))
+  arrange(desc(success_rate))
 
-gov_summary %>%
-  kable(caption = "Summary Statistics by Governorate") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
-  row_spec(1:3, bold = TRUE, color = "white", background = "#27ae60") %>%
-  row_spec((nrow(gov_summary)-2):nrow(gov_summary), bold = TRUE, color = "white", background = "#e74c3c")
+ggplot(gov_summary, aes(x = reorder(governorate_ar, success_rate), y = success_rate)) +
+  geom_col(aes(fill = success_rate), show.legend = FALSE) +
+  geom_text(aes(label = paste0(success_rate, "%")), hjust = -0.1, size = 4) +
+  scale_fill_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60", midpoint = 90) +
+  coord_flip() +
+  ylim(0, 100) +
+  labs(
+    title = "نسب النجاح حسب الولاية",
+    x = "",
+    y = "نسبة النجاح (%)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    axis.text.y = element_text(size = 11, face = "bold")
+  )
 ```
 
-::: {.callout-note}
-**Observation**: The table above highlights the top 3 performing governorates in green and the bottom 3 in red.
-:::
-
-## By Educational Level
-
-### Success Rates by Level
+## نسب النجاح حسب المستوى التعليمي
 
 ```{r}
 #| label: by-level
 
-level_summary <- summary_by_level(school_data)
+level_summary <- school_data %>%
+  group_by(level_name) %>%
+  summarise(
+    total_students = sum(nb_students),
+    total_passed = sum(nb_passed),
+    success_rate = round(total_passed / total_students * 100, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(success_rate))
 
 level_summary %>%
-  select(level_name, total_students, total_passed, overall_success_rate) %>%
-  kable(
-    col.names = c("Level", "Total Students", "Total Passed", "Overall Success Rate (%)"),
-    caption = "Success Rates by Educational Level"
-  ) %>%
+  kable(col.names = c("المستوى التعليمي", "عدد التلاميذ", "الناجحون", "نسبة النجاح %")) %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
-## Missing Values Analysis
+## القيم المفقودة
 
 ```{r}
 #| label: missing-values
 
-# Check for missing values
-missing_summary <- school_data %>%
-  summarise(across(everything(), ~sum(is.na(.)))) %>%
-  pivot_longer(everything(), names_to = "Column", values_to = "Missing Count")
+missing_counts <- sapply(school_data, function(x) sum(is.na(x)))
+missing_pct <- sapply(school_data, function(x) round(sum(is.na(x)) / length(x) * 100, 2))
+
+missing_summary <- data.frame(
+  column = names(school_data),
+  missing = missing_counts,
+  pct = missing_pct
+)
 
 missing_summary %>%
-  kable(caption = "Missing Values by Column") %>%
+  filter(missing > 0) %>%
+  kable(col.names = c("العمود", "القيم المفقودة", "النسبة %")) %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+
+if(sum(missing_counts) == 0) {
+  cat("✅ لا توجد قيم مفقودة في البيانات!")
+}
 ```
-
-## Next Steps
-
-Now that we understand our data, let's proceed to:
-
-1. **[Visualizations](visualizations.qmd)**: Create informative charts and graphs
-2. **[Statistical Analysis](statistics.qmd)**: Perform statistical tests and modeling

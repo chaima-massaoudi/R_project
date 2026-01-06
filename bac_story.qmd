@@ -1,6 +1,6 @@
 ---
-title: "🎓 The Road to Baccalaureate"
-subtitle: "Investigating Tunisia's Educational Journey: Where Do Students Struggle?"
+title: " الطريق نحو الباكالوريا"
+subtitle: "استكشاف المسيرة التعليمية في تونس: أين يعاني التلاميذ؟"
 ---
 
 ```{r}
@@ -12,7 +12,7 @@ library(tidyverse)
 library(knitr)
 library(kableExtra)
 
-# Load pre-computed results from Jupyter notebook
+# تحميل النتائج المحسوبة مسبقًا
 school_data <- readRDS("data/results/school_data_processed.rds")
 summary_stats <- readRDS("data/results/summary_stats.rds")
 summary_by_gov <- readRDS("data/results/summary_by_governorate.rds")
@@ -24,55 +24,55 @@ comparison_data <- readRDS("data/results/gap_analysis.rds")
 final_summary <- readRDS("data/results/final_summary.rds")
 ```
 
-# 📖 The Story Begins {.unnumbered}
+#  بداية القصة {.unnumbered}
 
 ::: {.callout-important appearance="simple"}
-## 🎯 The Investigation
-Tunisia's Baccalaureate exam is the gateway to higher education. But **where in the educational journey do students begin to struggle?** We're going to trace the path from 7th grade all the way to the Baccalaureate to find the weak points.
+##  التحقيق
+امتحان الباكالوريا في تونس هو البوابة نحو التعليم العالي. لكن **أين في المسيرة التعليمية يبدأ التلاميذ بالمعاناة؟** سنتتبع المسار من السنة السابعة وصولاً إلى الباكالوريا لإيجاد نقاط الضعف.
 :::
 
 ---
 
-## 🔍 The Educational Journey {.unnumbered}
+## 🔍 المسيرة التعليمية {.unnumbered}
 
-![The Path to Baccalaureate](img/01_educational_journey.png)
+![الطريق نحو الباكالوريا](img/01_educational_journey.png)
 
 ---
 
-## 🎓 Baccalaureate 2025 - Success by Field {.unnumbered}
+## 🎓 باكالوريا 2025 - النجاح حسب الشعبة {.unnumbered}
 
 ::: {.callout-warning appearance="simple"}
-## ⚡ The Reality Check
-The official Bac 2025 results reveal a **DRAMATIC DROP** from school performance.
+## ⚡ الحقيقة الصادمة
+نتائج باكالوريا 2025 الرسمية تكشف عن **انخفاض حاد** مقارنة بالأداء المدرسي.
 :::
 
-![Bac 2025 Success Rates by Field](img/02_bac_by_field.png)
+![نسب نجاح باكالوريا 2025 حسب الشعبة](img/02_bac_by_field.png)
 
-### 📊 Field Performance Summary
+### 📊 ملخص أداء الشعب
 
 ```{r}
 #| label: field-table
 
 bac_by_field %>%
-  select(field_en, field_ar, bac_success_rate) %>%
+  select(field_ar, bac_success_rate) %>%
   arrange(desc(bac_success_rate)) %>%
   mutate(
     status = case_when(
-      bac_success_rate >= 70 ~ "🌟 Excellent",
-      bac_success_rate >= 50 ~ "✅ Moderate",
-      bac_success_rate >= 35 ~ "⚠️ Struggling",
-      TRUE ~ "🚨 Critical"
+      bac_success_rate >= 70 ~ "🌟 ممتاز",
+      bac_success_rate >= 50 ~ "✅ متوسط",
+      bac_success_rate >= 35 ~ "⚠️ يحتاج دعم",
+      TRUE ~ "🚨 حرج"
     )
   ) %>%
-  kable(col.names = c("Field", "الشعبة", "Bac Rate (%)", "Status")) %>%
+  kable(col.names = c("الشعبة", "نسبة النجاح (%)", "الحالة")) %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
 ---
 
-## 🗺️ Baccalaureate 2025 - Regional Rankings {.unnumbered}
+## 🗺️ باكالوريا 2025 - الترتيب الجهوي {.unnumbered}
 
-![Bac 2025 by Governorate](img/03_bac_by_governorate.png)
+![باكالوريا 2025 حسب الولاية](img/03_bac_by_governorate.png)
 
 ```{r}
 #| label: regional-summary
@@ -80,12 +80,12 @@ bac_by_field %>%
 top_5 <- bac_by_governorate %>% head(5)
 bottom_5 <- bac_by_governorate %>% tail(5)
 
-cat("🏆 TOP 5 REGIONS:\n")
+cat("🏆 أفضل 5 ولايات:\n")
 for(i in 1:5) {
   cat(paste0("   ", i, ". ", top_5$governorate_ar[i], " - ", top_5$bac_success_rate[i], "%\n"))
 }
 
-cat("\n🆘 BOTTOM 5 REGIONS:\n")
+cat("\n🆘 أضعف 5 ولايات:\n")
 for(i in 1:5) {
   cat(paste0("   ", i, ". ", bottom_5$governorate_ar[6-i], " - ", bottom_5$bac_success_rate[6-i], "%\n"))
 }
@@ -93,109 +93,101 @@ for(i in 1:5) {
 
 ---
 
-## 💔 The Reality Gap {.unnumbered}
+## 💔 الفجوة الحقيقية {.unnumbered}
 
 ::: {.callout-important appearance="simple"}
-## 💔 The Harsh Truth
-Students pass their school years with **85-95% success**, but then face a **dramatic drop** in the actual Baccalaureate exam.
+## 💔 الحقيقة المرة
+ينجح التلاميذ في سنواتهم الدراسية بنسبة **85-95%**، لكنهم يواجهون **انخفاضًا حادًا** في امتحان الباكالوريا الفعلي.
 :::
 
-![Pre-Bac vs Actual Bac](img/04_gap_analysis.png)
+![الفجوة بين الأداء المدرسي والباكالوريا](img/04_gap_analysis.png)
 
-### 📉 The Shocking Drop
+### 📉 تحليل الفجوة
 
 ```{r}
 #| label: gap-table
 
 comparison_data %>%
   arrange(desc(gap)) %>%
-  select(field, field_ar, prebac_estimate, bac_actual, gap) %>%
+  select(field_ar, prebac_estimate, bac_actual, gap) %>%
   mutate(
     prebac_estimate = paste0(prebac_estimate, "%"),
     bac_actual = paste0(bac_actual, "%"),
-    gap = paste0("🔻 -", round(gap, 1), " pts")
+    gap = paste0("🔻 -", round(gap, 1), " نقطة")
   ) %>%
-  kable(col.names = c("Field", "الشعبة", "Pre-Bac %", "Bac 2025 %", "Gap")) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  column_spec(5, color = "#c0392b", bold = TRUE)
+  kable(col.names = c("الشعبة", "ما قبل الباك %", "باكالوريا 2025 %", "الفجوة"),
+        caption = "الانخفاض المذهل من الأداء المدرسي إلى نتائج الباكالوريا") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
 ---
 
-## 🎯 Pre-Bac Performance Heatmap {.unnumbered}
-
-![Heatmap: Fields × Regions](img/05_heatmap.png)
-
----
-
-## 📊 Success Distribution {.unnumbered}
-
-![Distribution of Success Rates](img/06_distribution.png)
-
----
-
-## 📋 Final Summary {.unnumbered}
+## 📊 الملخص النهائي {.unnumbered}
 
 ```{r}
 #| label: final-summary-table
 
-data.frame(
-  Metric = c(
-    "📊 National Bac 2025 Success Rate",
-    "👥 Total Bac 2025 Candidates",
-    "✅ Total Passed Bac 2025",
-    "🔢 Best Field (Bac 2025)",
-    "📚 Weakest Field (Bac 2025)",
-    "🏆 Best Region (Bac 2025)",
-    "🆘 Weakest Region (Bac 2025)",
-    "💔 Biggest Gap (Pre-Bac vs Bac)"
+# حساب الإحصائيات
+total_bac_candidates <- sum(bac_by_governorate$candidates)
+total_bac_passed <- sum(bac_by_governorate$passed)
+national_bac_rate <- round(total_bac_passed / total_bac_candidates * 100, 2)
+
+summary_table <- data.frame(
+  المؤشر = c(
+    "📊 نسبة النجاح الوطنية في الباك 2025",
+    "👥 إجمالي المترشحين للباك 2025",
+    "✅ إجمالي الناجحين في الباك 2025",
+    "🔢 أفضل شعبة (باك 2025)",
+    "📚 أضعف شعبة (باك 2025)",
+    "🏆 أفضل ولاية (باك 2025)",
+    "🆘 أضعف ولاية (باك 2025)",
+    "💔 أكبر فجوة (قبل الباك vs الباك)"
   ),
-  Value = c(
-    paste0(final_summary$national_bac_rate, "%"),
-    format(final_summary$total_bac_candidates, big.mark = ","),
-    format(final_summary$total_bac_passed, big.mark = ","),
-    final_summary$best_field,
-    final_summary$worst_field,
-    final_summary$best_region,
-    final_summary$worst_region,
-    final_summary$biggest_gap
+  النتيجة = c(
+    paste0(national_bac_rate, "%"),
+    format(total_bac_candidates, big.mark = ","),
+    format(total_bac_passed, big.mark = ","),
+    "🔢 الرياضيات (74.93%)",
+    "📚 الآداب (23.02%)",
+    "صفاقس 1 (71.31%)",
+    "جندوبة (43.08%)",
+    "الآداب: 90% ← 23% (-67 نقطة!)"
   )
-) %>%
-  kable(col.names = c("📋 Metric", "📈 Finding")) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  column_spec(1, bold = TRUE, width = "20em") %>%
-  column_spec(2, color = "#2c3e50", bold = TRUE)
+)
+
+summary_table %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
 ---
 
-## 🎯 Recommendations {.unnumbered}
+## 🎯 التوصيات {.unnumbered}
 
 ::: {.callout-tip}
-## 📝 Action Plan for Improving Baccalaureate Success
+## 📝 خطة العمل لتحسين نتائج الباكالوريا
 
-1. **🚨 URGENT: Literature & Economics** - These fields have only 23-29% Bac success. Need complete curriculum review.
-   
-2. **🗺️ Target Jendouba, Zaghouan, Kairouan, Gafsa** - Regions with < 47% success need urgent intervention.
+1. **🚨 عاجل: الآداب والاقتصاد** - هذه الشعب لديها فقط 23-29% نجاح. تحتاج مراجعة شاملة للمناهج وبرامج دعم مكثفة.
 
-3. **📊 Bridge the Gap** - Pre-Bac assessments (90%) don't prepare students for the actual Bac (23-75%).
+2. **🗺️ استهداف جندوبة، زغوان، القيروان، قفصة** - الولايات التي نسبة نجاحها < 47% تحتاج تدخلاً عاجلاً: المزيد من المعلمين، تحسين المرافق.
 
-4. **🔢 Learn from Math & Sports** - These fields achieve 73-75% Bac success.
+3. **📊 سد الفجوة** - تقييمات ما قبل الباك (90%) لا تحضر التلاميذ للباكالوريا الفعلي (23-75%). الاختبارات المدرسية يجب أن تكون أصعب.
 
-5. **🏆 Learn from Sfax & Medenine** - These regions lead at 68-71%.
+4. **🔢 التعلم من الرياضيات والرياضة** - هذه الشعب تحقق 73-75% نجاح. ما الذي يجعل تدريسها فعالاً؟
+
+5. **🏆 التعلم من صفاقس ومدنين** - هذه الولايات تتصدر بـ 68-71%. نشر أفضل ممارساتها وطنياً.
+
+6. **📚 إصلاح التقييم المدرسي** - الفجوة الكبيرة بين درجات المدرسة ونتائج الباك تشير إلى تضخم في الدرجات. يجب جعل الاختبارات المدرسية أصعب.
 :::
 
 ---
 
 ::: {.callout-important}
-## 🔮 The Harsh Reality
-This analysis reveals Tunisia's education system has a **preparation crisis**. Students appear successful in school (85-95%) but face harsh reality at the Baccalaureate (23-75%).
-:::
+## 🔮 الحقيقة القاسية
+هذا التحليل يكشف أن المنظومة التعليمية التونسية تعاني من **أزمة تحضير**. التلاميذ يبدون ناجحين في المدرسة (85-95%) لكنهم يواجهون الحقيقة القاسية في الباكالوريا (23-75%). يجب على المنظومة:
 
----
-
-::: {.callout-note}
-## 📓 Data Source
-All analysis performed in [analysis.ipynb](analysis.ipynb) using R.
-Results loaded from `data/results/` folder.
+- **مطابقة التقييمات المدرسية مع صعوبة الباكالوريا**
+- **توفير دعم موجه للشعب الضعيفة (الآداب، الاقتصاد)**
+- **معالجة التفاوتات الجهوية (28 نقطة فرق بين صفاقس وجندوبة)**
+- **تحضير التلاميذ للتحديات الحقيقية، وليس فقط تمريرهم**
 :::

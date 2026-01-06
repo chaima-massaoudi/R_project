@@ -3,28 +3,28 @@ project:
   output-dir: _site
 
 website:
-  title: "Tunisia Schools Success Rate Analysis"
-  description: "Analysis of student success rates across Tunisian schools by governorate and level"
+  title: "تحليل نسب النجاح في المدارس التونسية"
+  description: "تحليل نسب نجاح التلاميذ في المدارس التونسية حسب الولاية والمستوى"
   navbar:
     background: primary
-    left:
-      - href: index.qmd
-        text: Home
-      - href: data_exploration.qmd
-        text: Data Exploration
-      - href: bac_story.qmd
-        text: 🎓 Bac Story (from Jupyter)
-      - href: bac_analysis.qmd
-        text: 📊 Full Bac Analysis
-      - href: visualizations.qmd
-        text: Visualizations
-      - href: statistics.qmd
-        text: Statistical Analysis
     right:
+      - href: index.qmd
+        text: الرئيسية
+      - href: data_exploration.qmd
+        text: استكشاف البيانات
+      - href: bac_story.qmd
+        text: 🎓 قصة الباكالوريا
+      - href: bac_analysis.qmd
+        text: 📊 تحليل الباكالوريا
+      - href: visualizations.qmd
+        text: التصورات البيانية
+      - href: statistics.qmd
+        text: التحليل الإحصائي
+    left:
       - icon: github
         href: https://github.com/chaima-massaoudi/R_project
   page-footer:
-    center: "Tunisia Schools Analysis Project - 2026"
+    center: "مشروع تحليل المدارس التونسية - 2026"
 
 format:
   html:
@@ -33,7 +33,7 @@ format:
     toc: true
     toc-depth: 3
     code-fold: true
-    code-summary: "Show code"
+    code-summary: "عرض الكود"
     highlight-style: github
     
 execute:
@@ -44,4 +44,5 @@ execute:
 bibliography: bib.bib
 csl: apa.csl
 
-lang: en
+lang: ar
+dir: rtl

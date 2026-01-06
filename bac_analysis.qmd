@@ -1,6 +1,6 @@
 ---
-title: "🎓 The Road to Baccalaureate"
-subtitle: "Investigating Tunisia's Educational Journey: Where Do Students Struggle?"
+title: "📊 تحليل الباكالوريا الكامل"
+subtitle: "تحليل شامل لنسب نجاح باكالوريا 2025"
 ---
 
 ```{r}
@@ -15,515 +15,24 @@ library(scales)
 
 source("R/load_data.R")
 source("R/bac_data.R")
-
-# Create level categories
-school_data <- school_data %>%
-  mutate(
-    education_stage = case_when(
-      str_detect(level_name, "سابعة|ثامنة|تاسعة") ~ "Basic Education (7-9)",
-      str_detect(level_name, "أولى ثانوي") ~ "1st Year Secondary",
-      str_detect(level_name, "ثانية") ~ "2nd Year Secondary",
-      str_detect(level_name, "ثالثة") ~ "3rd Year Secondary (Pre-Bac)",
-      TRUE ~ "Other"
-    ),
-    field = case_when(
-      str_detect(level_name, "آداب") ~ "📚 Literature (آداب)",
-      str_detect(level_name, "رياضيات") ~ "🔢 Mathematics (رياضيات)",
-      str_detect(level_name, "علوم تجريبية") ~ "🔬 Experimental Sciences",
-      str_detect(level_name, "علوم تقنية") ~ "⚙️ Technical Sciences",
-      str_detect(level_name, "علوم إعلامية|تكنولوجيا") ~ "💻 IT & Computer Science",
-      str_detect(level_name, "إقتصاد") ~ "💼 Economics & Business",
-      str_detect(level_name, "رياضة") ~ "🏃 Sports",
-      str_detect(level_name, "أولى ثانوي") ~ "📖 Common Core",
-      str_detect(level_name, "سابعة|ثامنة|تاسعة") ~ "📚 Basic Education",
-      TRUE ~ "Other"
-    ),
-    year_level = case_when(
-      str_detect(level_name, "سابعة") ~ "7th Year",
-      str_detect(level_name, "ثامنة") ~ "8th Year",
-      str_detect(level_name, "تاسعة") ~ "9th Year",
-      str_detect(level_name, "أولى") ~ "1st Secondary",
-      str_detect(level_name, "ثانية") ~ "2nd Secondary",
-      str_detect(level_name, "ثالثة") ~ "3rd Secondary",
-      TRUE ~ "Other"
-    )
-  )
 ```
 
-# 📖 The Story Begins {.unnumbered}
+## 📖 مقدمة {.unnumbered}
 
 ::: {.callout-important appearance="simple"}
-## 🎯 The Investigation
-Tunisia's Baccalaureate exam is the gateway to higher education. But **where in the educational journey do students begin to struggle?** We're going to trace the path from 7th grade all the way to 3rd Secondary (just before the Bac) to find the weak points.
+## 🎯 الهدف
+تحليل نتائج باكالوريا 2025 الرسمية ومقارنتها بأداء التلاميذ خلال السنوات الدراسية، لتحديد نقاط الضعف والفجوات في المنظومة التعليمية.
 :::
 
 ---
 
-## 🔍 Chapter 1: The Overall Picture {.unnumbered}
-
-Let's first see how students perform at each stage of their education.
+## 🎓 نتائج باكالوريا 2025 حسب الشعبة {.unnumbered}
 
 ```{r}
-#| label: fig-journey
-#| fig-cap: "The Educational Journey: Success Rates Drop as Students Progress"
-#| fig-width: 14
-#| fig-height: 8
+#| label: bac-field-summary
 
-# Calculate success by stage
-stage_stats <- school_data %>%
-  mutate(
-    stage_order = case_when(
-      education_stage == "Basic Education (7-9)" ~ 1,
-      education_stage == "1st Year Secondary" ~ 2,
-      education_stage == "2nd Year Secondary" ~ 3,
-      education_stage == "3rd Year Secondary (Pre-Bac)" ~ 4,
-      TRUE ~ 5
-    )
-  ) %>%
-  group_by(education_stage, stage_order) %>%
-  summarise(
-    total_students = sum(nb_students),
-    total_passed = sum(nb_passed),
-    success_rate = round(total_passed / total_students * 100, 1),
-    .groups = "drop"
-  ) %>%
-  filter(education_stage != "Other") %>%
-  arrange(stage_order)
-
-# Create arrow/journey chart
-ggplot(stage_stats, aes(x = reorder(education_stage, stage_order), y = success_rate)) +
-  geom_segment(aes(xend = education_stage, yend = 0), color = "#3498db", linewidth = 8, alpha = 0.3) +
-  geom_point(aes(size = total_students, color = success_rate), show.legend = TRUE) +
-  geom_text(aes(label = paste0(success_rate, "%")), vjust = -1.5, size = 6, fontface = "bold") +
-  geom_text(aes(label = paste0(format(total_students, big.mark = ","), " students")), 
-            vjust = 2.5, size = 4, color = "gray40") +
-  scale_color_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60", midpoint = 85,
-                        name = "Success\nRate") +
-  scale_size_continuous(range = c(15, 30), guide = "none") +
-  labs(
-    title = "📚 THE EDUCATIONAL JOURNEY",
-    subtitle = "Tracking success rates from Basic Education to Pre-Baccalaureate",
-    x = "",
-    y = "Success Rate (%)"
-  ) +
-  ylim(70, 100) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 24, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
-    axis.text.x = element_text(size = 11, face = "bold", angle = 15, hjust = 0.5),
-    legend.position = "right"
-  )
-```
-
-```{r}
-#| label: stage-insight
-
-# Find the most challenging stage
-worst_stage <- stage_stats %>% filter(success_rate == min(success_rate))
-best_stage <- stage_stats %>% filter(success_rate == max(success_rate))
-drop <- best_stage$success_rate - worst_stage$success_rate
-
-cat(paste0("📉 THE DROP: From ", best_stage$success_rate, "% in ", best_stage$education_stage, 
-           " to ", worst_stage$success_rate, "% in ", worst_stage$education_stage, "\n"))
-cat(paste0("📊 That's a ", round(drop, 1), " percentage point drop!\n"))
-```
-
----
-
-## 🎯 Chapter 2: The Pre-Bac Fields - Where Dreams Are Made or Broken {.unnumbered}
-
-::: {.callout-warning appearance="simple"}
-## 🔬 Focus on 3rd Year Secondary
-The 3rd year (ثالثة) is the final preparation before the Baccalaureate. Let's see which fields struggle the most.
-:::
-
-```{r}
-#| label: fig-fields
-#| fig-cap: "Success Rates by Academic Field (3rd Year Secondary)"
-#| fig-width: 14
-#| fig-height: 9
-
-# 3rd year only (Pre-Bac)
-prebac_data <- school_data %>%
-  filter(str_detect(level_name, "ثالثة")) %>%
-  group_by(level_name) %>%
-  summarise(
-    students = sum(nb_students),
-    passed = sum(nb_passed),
-    failed = sum(nb_failed),
-    success_rate = round(passed / students * 100, 1),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    field_en = case_when(
-      str_detect(level_name, "آداب") ~ "📚 Literature",
-      str_detect(level_name, "رياضيات") ~ "🔢 Mathematics",
-      str_detect(level_name, "علوم تجريبية") ~ "🔬 Exp. Sciences",
-      str_detect(level_name, "علوم تقنية") ~ "⚙️ Technical Sci.",
-      str_detect(level_name, "علوم إعلامية") ~ "💻 Computer Sci.",
-      str_detect(level_name, "إقتصاد") ~ "💼 Economics",
-      str_detect(level_name, "رياضة") ~ "🏃 Sports",
-      TRUE ~ "Other"
-    ),
-    status = case_when(
-      success_rate >= 95 ~ "🌟 Excellent",
-      success_rate >= 90 ~ "✅ Good",
-      success_rate >= 85 ~ "⚠️ Needs Attention",
-      TRUE ~ "🚨 Critical"
-    )
-  )
-
-ggplot(prebac_data, aes(x = reorder(field_en, success_rate), y = success_rate)) +
-  geom_col(aes(fill = success_rate), show.legend = FALSE, width = 0.7) +
-  geom_text(aes(label = paste0(success_rate, "%")), hjust = -0.2, size = 5, fontface = "bold") +
-  geom_text(aes(label = paste0(format(students, big.mark = ","), " students"), y = 5), 
-            hjust = 0, size = 4, color = "white", fontface = "bold") +
-  scale_fill_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60", midpoint = 90) +
-  coord_flip() +
-  ylim(0, 105) +
-  labs(
-    title = "🎓 PRE-BAC PERFORMANCE BY FIELD",
-    subtitle = "Which specializations struggle the most?",
-    x = "",
-    y = "Success Rate (%)"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
-    axis.text.y = element_text(size = 13, face = "bold")
-  )
-```
-
-### 🚨 The Struggling Fields
-
-```{r}
-#| label: struggling-fields
-
-struggling <- prebac_data %>% 
-  arrange(success_rate) %>% 
-  head(3)
-
-cat("⚠️ FIELDS THAT NEED THE MOST SUPPORT:\n\n")
-for(i in 1:nrow(struggling)) {
-  failed_count <- struggling$students[i] - struggling$passed[i]
-  cat(paste0(i, ". ", struggling$field_en[i], " (", struggling$level_name[i], ")\n"))
-  cat(paste0("   📊 Success Rate: ", struggling$success_rate[i], "%\n"))
-  cat(paste0("   👥 Students: ", format(struggling$students[i], big.mark = ","), "\n"))
-  cat(paste0("   ❌ Failed: ", format(failed_count, big.mark = ","), " students\n\n"))
-}
-```
-
-::: {.callout-important}
-## 💡 Key Finding
-**Economics & Business (إقتصاد و تصرف)** and **Technical Sciences (علوم تقنية)** have the lowest success rates at the pre-Bac level. These fields may require additional resources, better teaching methods, or curriculum review.
-:::
-
----
-
-## 🗺️ Chapter 3: The Regional Story {.unnumbered}
-
-::: {.callout-note appearance="simple"}
-## 📍 Does location affect Pre-Bac success?
-Let's map success rates by governorate to see regional disparities.
-:::
-
-```{r}
-#| label: fig-regional-prebac
-#| fig-cap: "Pre-Bac Success Rates by Governorate"
-#| fig-width: 14
-#| fig-height: 10
-
-# Pre-Bac by governorate
-regional_prebac <- school_data %>%
-  filter(str_detect(level_name, "ثالثة")) %>%
-  group_by(governorate, governorate_ar) %>%
-  summarise(
-    students = sum(nb_students),
-    passed = sum(nb_passed),
-    success_rate = round(passed / students * 100, 1),
-    .groups = "drop"
-  ) %>%
-  filter(!is.na(governorate)) %>%
-  arrange(desc(success_rate))
-
-ggplot(regional_prebac, aes(x = reorder(governorate, success_rate), y = success_rate)) +
-  geom_segment(aes(xend = governorate, yend = 80), color = "gray70", linewidth = 1.5) +
-  geom_point(aes(color = success_rate, size = students), show.legend = TRUE) +
-  geom_text(aes(label = paste0(success_rate, "%")), hjust = -0.5, size = 4, fontface = "bold") +
-  scale_color_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60", midpoint = 90,
-                        name = "Success\nRate") +
-  scale_size_continuous(range = c(4, 15), name = "Students", labels = comma) +
-  geom_hline(yintercept = 90, linetype = "dashed", color = "#e74c3c", linewidth = 1) +
-  annotate("text", x = 5, y = 91, label = "← National Target: 90%", 
-           color = "#e74c3c", fontface = "italic", size = 4) +
-  coord_flip() +
-  ylim(80, 100) +
-  labs(
-    title = "🗺️ REGIONAL PRE-BAC PERFORMANCE",
-    subtitle = "Which governorates prepare students best for the Baccalaureate?",
-    x = "",
-    y = "Success Rate (%)"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 20, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 12, color = "#7f8c8d"),
-    axis.text.y = element_text(size = 11, face = "bold"),
-    legend.position = "right"
-  )
-```
-
-### 🏆 Champions vs 🆘 Challengers
-
-```{r}
-#| label: regional-comparison
-
-top_3 <- regional_prebac %>% head(3)
-bottom_3 <- regional_prebac %>% tail(3) %>% arrange(success_rate)
-
-cat("🏆 TOP PERFORMING REGIONS (Pre-Bac):\n")
-for(i in 1:3) {
-  cat(paste0("   ", i, ". ", top_3$governorate[i], " (", top_3$governorate_ar[i], ") - ", 
-             top_3$success_rate[i], "%\n"))
-}
-
-cat("\n🆘 REGIONS NEEDING SUPPORT:\n")
-for(i in 1:3) {
-  cat(paste0("   ", i, ". ", bottom_3$governorate[i], " (", bottom_3$governorate_ar[i], ") - ", 
-             bottom_3$success_rate[i], "%\n"))
-}
-
-gap <- max(regional_prebac$success_rate) - min(regional_prebac$success_rate)
-cat(paste0("\n📊 THE GAP: ", gap, " percentage points between best and worst regions"))
-```
-
----
-
-## 📉 Chapter 4: Tracing the Problem Back - Year by Year {.unnumbered}
-
-::: {.callout-tip appearance="simple"}
-## 🔍 Where Does the Weakness Start?
-Let's trace back through each year to find where students begin to struggle.
-:::
-
-```{r}
-#| label: fig-year-by-year
-#| fig-cap: "Success Rates Through the Years"
-#| fig-width: 14
-#| fig-height: 8
-
-year_analysis <- school_data %>%
-  mutate(
-    year_order = case_when(
-      str_detect(level_name, "سابعة") ~ 1,
-      str_detect(level_name, "ثامنة") ~ 2,
-      str_detect(level_name, "تاسعة") ~ 3,
-      str_detect(level_name, "أولى") ~ 4,
-      str_detect(level_name, "ثانية") ~ 5,
-      str_detect(level_name, "ثالثة") ~ 6,
-      TRUE ~ 0
-    ),
-    year_label = case_when(
-      str_detect(level_name, "سابعة") ~ "7th\nBasic",
-      str_detect(level_name, "ثامنة") ~ "8th\nBasic",
-      str_detect(level_name, "تاسعة") ~ "9th\nBasic",
-      str_detect(level_name, "أولى") ~ "1st\nSecondary",
-      str_detect(level_name, "ثانية") ~ "2nd\nSecondary",
-      str_detect(level_name, "ثالثة") ~ "3rd\nSecondary",
-      TRUE ~ "Other"
-    )
-  ) %>%
-  filter(year_order > 0) %>%
-  group_by(year_order, year_label) %>%
-  summarise(
-    students = sum(nb_students),
-    passed = sum(nb_passed),
-    success_rate = round(passed / students * 100, 1),
-    .groups = "drop"
-  )
-
-ggplot(year_analysis, aes(x = year_order, y = success_rate)) +
-  geom_area(fill = "#3498db", alpha = 0.3) +
-  geom_line(color = "#2c3e50", linewidth = 2) +
-  geom_point(aes(size = students), color = "#e74c3c", show.legend = TRUE) +
-  geom_text(aes(label = paste0(success_rate, "%")), vjust = -1.5, size = 5, fontface = "bold") +
-  scale_x_continuous(breaks = year_analysis$year_order, labels = year_analysis$year_label) +
-  scale_size_continuous(range = c(8, 18), name = "Students", labels = comma) +
-  geom_hline(yintercept = 80, linetype = "dashed", color = "#e74c3c", linewidth = 1, alpha = 0.5) +
-  labs(
-    title = "📈 THE PATH TO BACCALAUREATE",
-    subtitle = "Tracking success rates from 7th grade to 3rd Secondary (Pre-Bac)",
-    x = "Educational Year",
-    y = "Success Rate (%)"
-  ) +
-  ylim(70, 100) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
-    axis.text.x = element_text(size = 12, face = "bold"),
-    legend.position = "right"
-  )
-```
-
-```{r}
-#| label: weakness-analysis
-
-# Find the biggest drop
-year_analysis <- year_analysis %>%
-  arrange(year_order) %>%
-  mutate(
-    drop = lag(success_rate) - success_rate,
-    drop = ifelse(is.na(drop), 0, drop)
-  )
-
-biggest_drop <- year_analysis %>% filter(drop == max(drop))
-
-cat("🔍 WEAKNESS ANALYSIS:\n\n")
-cat(paste0("📉 Biggest drop occurs at: ", biggest_drop$year_label[1], "\n"))
-cat(paste0("   Drop of ", round(biggest_drop$drop[1], 1), " percentage points from previous year\n\n"))
-
-lowest <- year_analysis %>% filter(success_rate == min(success_rate))
-cat(paste0("⚠️ Lowest success rate: ", lowest$success_rate[1], "% at ", lowest$year_label[1], "\n"))
-```
-
----
-
-## 🔥 Chapter 5: The Complete Heatmap - Fields × Regions {.unnumbered}
-
-```{r}
-#| label: fig-complete-heatmap
-#| fig-cap: "Pre-Bac Success: Which Fields Struggle in Which Regions?"
-#| fig-width: 16
-#| fig-height: 14
-
-# Pre-Bac by field and governorate
-heatmap_data <- school_data %>%
-  filter(str_detect(level_name, "ثالثة")) %>%
-  mutate(
-    field_short = case_when(
-      str_detect(level_name, "آداب") ~ "Literature",
-      str_detect(level_name, "رياضيات") ~ "Math",
-      str_detect(level_name, "علوم تجريبية") ~ "Exp.Sci",
-      str_detect(level_name, "علوم تقنية") ~ "Tech.Sci",
-      str_detect(level_name, "علوم إعلامية") ~ "IT",
-      str_detect(level_name, "إقتصاد") ~ "Economics",
-      str_detect(level_name, "رياضة") ~ "Sports",
-      TRUE ~ "Other"
-    )
-  ) %>%
-  filter(!is.na(governorate)) %>%
-  group_by(governorate, field_short) %>%
-  summarise(
-    success_rate = round(sum(nb_passed) / sum(nb_students) * 100, 1),
-    .groups = "drop"
-  )
-
-# Order governorates by overall success
-gov_order <- heatmap_data %>%
-  group_by(governorate) %>%
-  summarise(avg = mean(success_rate)) %>%
-  arrange(desc(avg)) %>%
-  pull(governorate)
-
-heatmap_data <- heatmap_data %>%
-  mutate(governorate = factor(governorate, levels = rev(gov_order)))
-
-ggplot(heatmap_data, aes(x = field_short, y = governorate, fill = success_rate)) +
-  geom_tile(color = "white", linewidth = 1.2) +
-  geom_text(aes(label = success_rate, 
-                color = ifelse(success_rate > 88, "white", "black")), 
-            size = 4, fontface = "bold") +
-  scale_fill_gradient2(
-    low = "#c0392b", 
-    mid = "#f39c12", 
-    high = "#27ae60", 
-    midpoint = 88,
-    name = "Success\nRate (%)"
-  ) +
-  scale_color_identity() +
-  labs(
-    title = "🎯 THE COMPLETE PICTURE",
-    subtitle = "Pre-Bac Success Rates: Which Fields Struggle in Which Regions?",
-    x = "Academic Field",
-    y = "Governorate"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 12, face = "bold"),
-    axis.text.y = element_text(size = 11, face = "bold"),
-    legend.position = "right"
-  )
-```
-
----
-
-## 🎯 Chapter 7: THE SHOCKING TRUTH - Baccalaureate 2025 Results {.unnumbered}
-
-::: {.callout-important appearance="simple"}
-## ⚡ The Reality Check
-We've seen that Pre-Bac success rates are **85-95%**. But what happens when students actually sit for the Baccalaureate exam? The official Bac 2025 results reveal a **DRAMATIC DROP**.
-:::
-
-```{r}
-#| label: fig-bac-fields
-#| fig-cap: "REAL Baccalaureate 2025 Success Rates by Field"
-#| fig-width: 14
-#| fig-height: 10
-
-# Plot real Bac results by field
-bac_field_plot <- bac_by_field %>%
-  mutate(
-    status = case_when(
-      bac_success_rate >= 70 ~ "🌟 Excellent",
-      bac_success_rate >= 50 ~ "✅ Moderate",
-      bac_success_rate >= 35 ~ "⚠️ Struggling",
-      TRUE ~ "🚨 Critical"
-    ),
-    status_color = case_when(
-      bac_success_rate >= 70 ~ "#27ae60",
-      bac_success_rate >= 50 ~ "#f39c12",
-      bac_success_rate >= 35 ~ "#e67e22",
-      TRUE ~ "#c0392b"
-    )
-  )
-
-ggplot(bac_field_plot, aes(x = reorder(field_emoji, bac_success_rate), y = bac_success_rate)) +
-  geom_col(aes(fill = bac_success_rate), width = 0.75, show.legend = FALSE) +
-  geom_text(aes(label = paste0(bac_success_rate, "%")), hjust = -0.1, size = 6, fontface = "bold") +
-  geom_hline(yintercept = 50, linetype = "dashed", color = "#e74c3c", linewidth = 1.2) +
-  annotate("text", x = 4, y = 52, label = "← 50% Threshold", 
-           color = "#e74c3c", fontface = "bold", size = 5) +
-  scale_fill_gradient2(low = "#c0392b", mid = "#f39c12", high = "#27ae60", midpoint = 50) +
-  coord_flip() +
-  ylim(0, 85) +
-  labs(
-    title = "🎓 BACCALAUREATE 2025 - SUCCESS BY FIELD",
-    subtitle = "Official results: الدورة الرئيسية والمراقبة",
-    x = "",
-    y = "Success Rate (%)",
-    caption = "Source: Ministry of Education, Tunisia - Bac 2025"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 24, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
-    plot.caption = element_text(size = 10, color = "gray50"),
-    axis.text.y = element_text(size = 14, face = "bold")
-  )
-```
-
-### 🚨 The Alarming Findings
-
-```{r}
-#| label: bac-field-analysis
-
-cat("📊 BACCALAUREATE 2025 - SUCCESS RATES BY FIELD:\n")
-cat("═══════════════════════════════════════════════════════\n\n")
+cat("📊 نسب نجاح باكالوريا 2025 حسب الشعبة:\n")
+cat("═══════════════════════════════════════\n\n")
 
 for(i in 1:nrow(bac_by_field)) {
   emoji <- if(bac_by_field$bac_success_rate[i] >= 70) "🌟" 
@@ -531,319 +40,224 @@ for(i in 1:nrow(bac_by_field)) {
            else if(bac_by_field$bac_success_rate[i] >= 35) "⚠️"
            else "🚨"
   
-  cat(paste0(emoji, " ", bac_by_field$field_en[i], " (", bac_by_field$field_ar[i], "): ", 
-             bac_by_field$bac_success_rate[i], "%\n"))
+  cat(paste0(emoji, " ", bac_by_field$field_ar[i], ": ", bac_by_field$bac_success_rate[i], "%\n"))
 }
-
-cat("\n💔 MOST STRUGGLING FIELDS:\n")
-cat("   • Literature (الآداب): Only 23.02% pass!\n")
-cat("   • Economics (الاقتصاد): Only 28.95% pass!\n")
-cat("   • Technical Sciences: Only 35.02% pass!\n")
 ```
 
-::: {.callout-warning}
-## 💡 Critical Finding
-**Literature students have only 23% Bac success!** Yet they had **90%+ success in pre-Bac years**. This means the Baccalaureate exam is dramatically harder than the annual assessments.
-:::
+```{r}
+#| label: fig-bac-fields
+#| fig-cap: "نسب نجاح باكالوريا 2025 حسب الشعبة"
+#| fig-width: 14
+#| fig-height: 10
+
+ggplot(bac_by_field, aes(x = reorder(field_ar, bac_success_rate), y = bac_success_rate)) +
+  geom_col(aes(fill = bac_success_rate), width = 0.75, show.legend = FALSE) +
+  geom_text(aes(label = paste0(bac_success_rate, "%")), hjust = -0.1, size = 6, fontface = "bold") +
+  geom_hline(yintercept = 50, linetype = "dashed", color = "#e74c3c", linewidth = 1.2) +
+  scale_fill_gradient2(low = "#c0392b", mid = "#f39c12", high = "#27ae60", midpoint = 50) +
+  coord_flip() +
+  ylim(0, 85) +
+  labs(
+    title = "🎓 باكالوريا 2025 - النجاح حسب الشعبة",
+    subtitle = "النتائج الرسمية: الدورة الرئيسية والمراقبة",
+    x = "",
+    y = "نسبة النجاح (%)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 24),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
+    axis.text.y = element_text(size = 14, face = "bold")
+  )
+```
 
 ---
 
-## 🗺️ Chapter 8: Bac 2025 - Regional Rankings {.unnumbered}
+## 🗺️ نتائج باكالوريا 2025 حسب الولاية {.unnumbered}
 
 ```{r}
 #| label: fig-bac-gov
-#| fig-cap: "Baccalaureate 2025 Success Rates by Governorate"
+#| fig-cap: "ترتيب الولايات حسب نسبة النجاح في باكالوريا 2025"
 #| fig-width: 14
 #| fig-height: 14
 
-# Plot real Bac results by governorate
 ggplot(bac_by_governorate, aes(x = reorder(governorate_ar, bac_success_rate), y = bac_success_rate)) +
   geom_segment(aes(xend = governorate_ar, yend = 40), color = "gray80", linewidth = 1) +
   geom_point(aes(color = bac_success_rate, size = candidates), show.legend = TRUE) +
   geom_text(aes(label = paste0(bac_success_rate, "%")), hjust = -0.3, size = 4, fontface = "bold") +
-  scale_color_gradient2(low = "#c0392b", mid = "#f39c12", high = "#27ae60", midpoint = 55,
-                        name = "Success\nRate (%)") +
-  scale_size_continuous(range = c(4, 12), name = "Candidates", labels = comma) +
+  scale_color_gradient2(low = "#c0392b", mid = "#f39c12", high = "#27ae60", midpoint = 55, name = "نسبة\nالنجاح") +
+  scale_size_continuous(range = c(4, 12), name = "المترشحون", labels = comma) +
   geom_hline(yintercept = 50, linetype = "dashed", color = "#e74c3c", linewidth = 1) +
-  annotate("text", x = 8, y = 51.5, label = "← 50% Threshold", color = "#e74c3c", fontface = "bold") +
   coord_flip() +
   ylim(40, 78) +
   labs(
-    title = "🏆 BAC 2025 - REGIONAL RANKING",
-    subtitle = "ترتيب المندوبيات الجهوية حسب نسبة النجاح",
+    title = "🏆 ترتيب المندوبيات الجهوية",
+    subtitle = "ترتيب حسب نسبة النجاح في باكالوريا 2025",
     x = "",
-    y = "Success Rate (%)",
-    caption = "Source: Ministry of Education - Bac 2025"
+    y = "نسبة النجاح (%)"
   ) +
   theme_minimal(base_size = 12) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d", family = "Arial"),
-    plot.caption = element_text(size = 10, color = "gray50"),
-    axis.text.y = element_text(size = 11, face = "bold"),
-    legend.position = "right"
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 22),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
+    axis.text.y = element_text(size = 11, face = "bold")
   )
 ```
 
-### 🏆 Regional Performance Analysis
+### 🏆 أفضل وأضعف الولايات
 
 ```{r}
-#| label: bac-regional-analysis
+#| label: top-bottom
 
-top_gov <- bac_by_governorate %>% head(5)
-bottom_gov <- bac_by_governorate %>% tail(5) %>% arrange(bac_success_rate)
+top_5 <- bac_by_governorate %>% head(5)
+bottom_5 <- bac_by_governorate %>% tail(5) %>% arrange(bac_success_rate)
 
-cat("🏆 TOP 5 PERFORMING REGIONS (Bac 2025):\n")
-cat("══════════════════════════════════════════\n")
+cat("🏆 أفضل 5 ولايات:\n")
 for(i in 1:5) {
-  cat(paste0("   #", i, " ", top_gov$governorate_ar[i], " (", top_gov$governorate_en[i], "): ", 
-             top_gov$bac_success_rate[i], "% (", format(top_gov$passed[i], big.mark=","), "/", 
-             format(top_gov$candidates[i], big.mark=","), " passed)\n"))
+  cat(paste0("   ", i, ". ", top_5$governorate_ar[i], " - ", top_5$bac_success_rate[i], 
+             "% (", format(top_5$passed[i], big.mark=","), "/", format(top_5$candidates[i], big.mark=","), ")\n"))
 }
 
-cat("\n🆘 BOTTOM 5 REGIONS (Need Urgent Support):\n")
-cat("══════════════════════════════════════════\n")
+cat("\n🆘 أضعف 5 ولايات:\n")
 for(i in 1:5) {
-  cat(paste0("   #", 22+i, " ", bottom_gov$governorate_ar[i], " (", bottom_gov$governorate_en[i], "): ", 
-             bottom_gov$bac_success_rate[i], "%\n"))
+  cat(paste0("   ", i, ". ", bottom_5$governorate_ar[i], " - ", bottom_5$bac_success_rate[i], "%\n"))
 }
 
-cat("\n📊 THE GAP: ", round(max(bac_by_governorate$bac_success_rate) - min(bac_by_governorate$bac_success_rate), 2), 
-    " percentage points between Sfax 1 and Jendouba!\n")
+gap <- max(bac_by_governorate$bac_success_rate) - min(bac_by_governorate$bac_success_rate)
+cat("\n📊 الفجوة:", round(gap, 2), "نقطة بين صفاقس 1 وجندوبة")
 ```
 
 ---
 
-## 📉 Chapter 9: The Reality Gap - Pre-Bac vs Actual Bac {.unnumbered}
+## 💔 الفجوة بين الأداء المدرسي والباكالوريا {.unnumbered}
 
-::: {.callout-important appearance="simple"}
-## 💔 The Harsh Truth
-Students pass their school years with **85-95% success**, but then face a **dramatic drop** in the actual Baccalaureate exam.
+::: {.callout-warning}
+## ⚡ الحقيقة الصادمة
+التلاميذ ينجحون في سنواتهم الدراسية بنسبة **85-95%**، لكنهم يواجهون **انخفاضًا حادًا** في الباكالوريا!
 :::
 
 ```{r}
-#| label: fig-gap-analysis
-#| fig-cap: "THE GAP: Pre-Bac School Performance vs Actual Bac Results"
+#| label: fig-gap
+#| fig-cap: "الفجوة الحقيقية بين الأداء المدرسي والباكالوريا"
 #| fig-width: 14
 #| fig-height: 10
 
-# Create comparison data
 comparison_data <- tibble(
-  field = c("📚 Literature", "💼 Economics", "⚙️ Technical Sci.", "🔬 Exp. Sciences", 
-            "💻 Computer Sci.", "🏃 Sports", "🔢 Mathematics"),
-  prebac_estimate = c(90.5, 85.4, 88.2, 92.5, 94.1, 97.8, 97.2),  # From our school data
-  bac_actual = c(23.02, 28.95, 35.02, 45.83, 48.47, 73.33, 74.93),
-  field_ar = c("الآداب", "الاقتصاد", "العلوم التقنية", "العلوم التجريبية", 
-               "علوم الإعلامية", "الرياضة", "الرياضيات")
+  field = c("📚 الآداب", "💼 الاقتصاد", "⚙️ العلوم التقنية", "🔬 العلوم التجريبية", 
+            "💻 علوم الإعلامية", "🏃 الرياضة", "🔢 الرياضيات"),
+  prebac_estimate = c(90.5, 85.4, 88.2, 92.5, 94.1, 97.8, 97.2),
+  bac_actual = c(23.02, 28.95, 35.02, 45.83, 48.47, 73.33, 74.93)
 ) %>%
-  mutate(
-    gap = prebac_estimate - bac_actual,
-    gap_label = paste0("-", round(gap, 0), " pts")
-  )
+  mutate(gap = prebac_estimate - bac_actual)
 
-# Reshape for plotting
 comparison_long <- comparison_data %>%
   pivot_longer(cols = c(prebac_estimate, bac_actual), 
                names_to = "exam_type", values_to = "success_rate") %>%
-  mutate(
-    exam_label = if_else(exam_type == "prebac_estimate", "📚 Pre-Bac (School)", "🎓 Actual Bac 2025")
-  )
+  mutate(exam_label = if_else(exam_type == "prebac_estimate", "📚 ما قبل الباك", "🎓 باكالوريا 2025"))
 
 ggplot(comparison_long, aes(x = reorder(field, success_rate), y = success_rate, fill = exam_label)) +
   geom_col(position = "dodge", width = 0.7) +
   geom_text(aes(label = paste0(success_rate, "%")), 
             position = position_dodge(width = 0.7), hjust = -0.1, size = 4, fontface = "bold") +
-  scale_fill_manual(values = c("📚 Pre-Bac (School)" = "#27ae60", "🎓 Actual Bac 2025" = "#c0392b"),
-                    name = "Exam Type") +
+  scale_fill_manual(values = c("📚 ما قبل الباك" = "#27ae60", "🎓 باكالوريا 2025" = "#c0392b"), name = "") +
   coord_flip() +
   ylim(0, 110) +
   labs(
-    title = "💔 THE REALITY GAP",
-    subtitle = "Pre-Bac school success vs Actual Baccalaureate 2025 results",
+    title = "💔 الفجوة الحقيقية",
+    subtitle = "الأداء المدرسي مقابل نتائج الباكالوريا 2025",
     x = "",
-    y = "Success Rate (%)"
+    y = "نسبة النجاح (%)"
   ) +
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5, size = 24, color = "#c0392b"),
     plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
-    axis.text.y = element_text(size = 13, face = "bold"),
-    legend.position = "bottom",
-    legend.text = element_text(size = 12)
+    legend.position = "bottom"
   )
 ```
 
-### 💔 The Shocking Drop
+### 📉 جدول الفجوة
 
 ```{r}
 #| label: gap-table
 
 comparison_data %>%
   arrange(desc(gap)) %>%
-  select(field, field_ar, prebac_estimate, bac_actual, gap) %>%
   mutate(
-    prebac_estimate = paste0(prebac_estimate, "%"),
-    bac_actual = paste0(bac_actual, "%"),
-    gap = paste0("🔻 -", round(gap, 1), " pts")
+    prebac = paste0(prebac_estimate, "%"),
+    bac = paste0(bac_actual, "%"),
+    drop = paste0("🔻 -", round(gap, 1), " نقطة")
   ) %>%
-  kable(col.names = c("Field", "الشعبة", "Pre-Bac %", "Bac 2025 %", "Gap"),
-        caption = "The devastating drop from school performance to Bac results") %>%
+  select(field, prebac, bac, drop) %>%
+  kable(col.names = c("الشعبة", "ما قبل الباك", "باكالوريا 2025", "الانخفاض")) %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  column_spec(1, bold = TRUE) %>%
-  column_spec(5, color = "#c0392b", bold = TRUE)
+  column_spec(4, color = "#c0392b", bold = TRUE)
 ```
-
-::: {.callout-warning}
-## 🚨 CRITICAL INSIGHT
-**Literature students drop 67 percentage points!** They have 90% school success but only 23% Bac success. This reveals a massive disconnect between:
-- School assessments (which are easier)
-- The actual Baccalaureate exam (which is much harder)
-:::
 
 ---
 
-## 💡 Chapter 10: Why Do Students Struggle? {.unnumbered}
-
-::: {.callout-warning appearance="simple"}
-## 🤔 Potential Causes of Low Success Rates
-Based on our analysis, here are the likely factors contributing to student struggles:
-:::
+## 📊 الملخص النهائي {.unnumbered}
 
 ```{r}
-#| label: fig-causes
-#| fig-cap: "Hypothesized Factors Affecting Student Success"
-#| fig-width: 12
-#| fig-height: 8
+#| label: final-summary
 
-# Create a visual for hypothesized causes
-causes <- data.frame(
-  factor = c(
-    "🏫 Lack of Resources in Rural Areas",
-    "👨‍🏫 Teacher Quality Gap",
-    "📚 Curriculum Difficulty",
-    "💰 Socioeconomic Factors",
-    "🏠 Study Environment at Home",
-    "📊 Large Class Sizes"
+total_candidates <- sum(bac_by_governorate$candidates)
+total_passed <- sum(bac_by_governorate$passed)
+national_rate <- round(total_passed / total_candidates * 100, 2)
+
+summary_df <- data.frame(
+  المؤشر = c(
+    "📊 نسبة النجاح الوطنية",
+    "👥 إجمالي المترشحين",
+    "✅ إجمالي الناجحين",
+    "🔢 أفضل شعبة",
+    "📚 أضعف شعبة",
+    "🏆 أفضل ولاية",
+    "🆘 أضعف ولاية",
+    "💔 أكبر فجوة"
   ),
-  impact = c(9, 8.5, 7, 8, 6, 4),
-  category = c("Infrastructure", "Teaching", "Curriculum", "Social", "Social", "Infrastructure")
-)
-
-ggplot(causes, aes(x = reorder(factor, impact), y = impact, fill = category)) +
-  geom_col(width = 0.7, show.legend = TRUE) +
-  geom_text(aes(label = impact), hjust = -0.3, size = 5, fontface = "bold") +
-  coord_flip() +
-  scale_fill_manual(values = c(
-    "Infrastructure" = "#3498db",
-    "Teaching" = "#27ae60",
-    "Curriculum" = "#9b59b6",
-    "Social" = "#e74c3c"
-  ), name = "Category") +
-  ylim(0, 11) +
-  labs(
-    title = "🔍 HYPOTHESIZED CAUSES OF STRUGGLES",
-    subtitle = "Impact score based on regional disparity patterns observed",
-    x = "",
-    y = "Estimated Impact (1-10)"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 20, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 12, color = "#7f8c8d"),
-    axis.text.y = element_text(size = 12, face = "bold"),
-    legend.position = "bottom"
-  )
-```
-
-### 📋 Key Observations
-
-| Pattern Observed | Likely Cause | Suggested Intervention |
-|------------------|--------------|------------------------|
-| Rural regions underperform | Lack of qualified teachers | Teacher incentive programs for rural areas |
-| Economics field struggles | Complex curriculum, practical skill gap | More hands-on learning, industry partnerships |
-| Technical Sciences low rates | Equipment and lab shortages | Infrastructure investment |
-| Large gap between regions | Unequal resource distribution | Targeted funding for struggling governorates |
-| 1st Secondary dip | Transition difficulty from basic education | Bridge programs, counseling |
-
----
-
-## 📊 Final Summary {.unnumbered}
-
-```{r}
-#| label: final-summary-table
-
-# Overall summary
-overall_prebac <- school_data %>%
-  filter(str_detect(level_name, "ثالثة")) %>%
-  summarise(
-    total = sum(nb_students),
-    passed = sum(nb_passed),
-    rate = round(passed/total*100, 1)
-  )
-
-# Total Bac candidates
-total_bac_candidates <- sum(bac_by_governorate$candidates)
-total_bac_passed <- sum(bac_by_governorate$passed)
-national_bac_rate <- round(total_bac_passed / total_bac_candidates * 100, 2)
-
-summary_data <- data.frame(
-  Metric = c(
-    "📊 National Bac 2025 Success Rate",
-    "👥 Total Bac 2025 Candidates",
-    "✅ Total Passed Bac 2025",
-    "🔢 Best Field (Bac 2025)",
-    "📚 Weakest Field (Bac 2025)",
-    "🏆 Best Region (Bac 2025)",
-    "🆘 Weakest Region (Bac 2025)",
-    "💔 Biggest Gap (Pre-Bac vs Bac)"
-  ),
-  Value = c(
-    paste0(national_bac_rate, "%"),
-    format(total_bac_candidates, big.mark = ","),
-    format(total_bac_passed, big.mark = ","),
-    "🔢 Mathematics (74.93%)",
-    "📚 Literature (23.02%)",
-    "صفاقس 1 - Sfax 1 (71.31%)",
-    "جندوبة - Jendouba (43.08%)",
-    "Literature: 90% → 23% (-67 pts!)"
+  القيمة = c(
+    paste0(national_rate, "%"),
+    format(total_candidates, big.mark = ","),
+    format(total_passed, big.mark = ","),
+    "الرياضيات (74.93%)",
+    "الآداب (23.02%)",
+    "صفاقس 1 (71.31%)",
+    "جندوبة (43.08%)",
+    "الآداب: -67 نقطة!"
   )
 )
 
-summary_data %>%
-  kable(col.names = c("📋 Metric", "📈 Finding")) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  column_spec(1, bold = TRUE, width = "20em") %>%
-  column_spec(2, color = "#2c3e50", bold = TRUE)
+summary_df %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
 ---
 
-## 🎯 Recommendations {.unnumbered}
+## 🎯 التوصيات {.unnumbered}
 
 ::: {.callout-tip}
-## 📝 Action Plan for Improving Baccalaureate Success
+## خطة العمل لتحسين نتائج الباكالوريا
 
-1. **🚨 URGENT: Literature & Economics** - These fields have only 23-29% Bac success. Need complete curriculum review and intensive support programs.
-   
-2. **🗺️ Target Jendouba, Zaghouan, Kairouan, Gafsa** - Regions with < 47% success need urgent intervention: more teachers, better facilities.
+1. **🚨 عاجل: الآداب والاقتصاد** - نسب نجاح 23-29% فقط. مراجعة شاملة للمناهج مطلوبة.
 
-3. **📊 Bridge the Gap** - Pre-Bac assessments (90%) don't prepare students for the actual Bac (23-75%). School tests must be more rigorous.
+2. **🗺️ دعم الولايات المتأخرة** - جندوبة، زغوان، القيروان، قفصة تحتاج تدخلاً عاجلاً.
 
-4. **🔢 Learn from Math & Sports** - These fields achieve 73-75% Bac success. What makes their teaching effective?
+3. **📊 إصلاح التقييم المدرسي** - الفجوة الكبيرة تشير إلى تضخم في الدرجات المدرسية.
 
-5. **🏆 Learn from Sfax & Medenine** - These regions lead at 68-71%. Replicate their best practices nationally.
+4. **🔢 التعلم من النجاح** - دراسة أسباب تفوق شعبتي الرياضيات والرياضة.
 
-6. **📚 Reform School Assessment** - The massive gap between school grades and Bac results suggests grade inflation. Make school tests harder.
+5. **🏆 نشر أفضل الممارسات** - تعميم تجربة صفاقس ومدنين على باقي الولايات.
 :::
 
 ---
 
 ::: {.callout-important}
-## 🔮 The Harsh Reality
-This analysis reveals Tunisia's education system has a **preparation crisis**. Students appear successful in school (85-95%) but face harsh reality at the Baccalaureate (23-75%). The system must:
+## 🔮 الخلاصة
+المنظومة التعليمية التونسية تعاني من **أزمة تحضير** حقيقية. التلاميذ يبدون ناجحين (85-95%) لكنهم يفشلون في الاختبار الحقيقي (23-75%). الحل يتطلب:
 
-- **Align school assessments with Bac difficulty**
-- **Provide targeted support for weak fields (Literature, Economics)**
-- **Address regional inequalities (28-point gap between Sfax and Jendouba)**
-- **Prepare students for real challenges, not just pass them**
+- مطابقة التقييمات المدرسية مع صعوبة الباكالوريا
+- دعم الشعب والولايات الضعيفة
+- تحضير التلاميذ للتحديات الحقيقية
 :::

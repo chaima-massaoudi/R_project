@@ -1,15 +1,19 @@
 /* Tunisia Schools Analysis - Custom Styles */
+/* Arabic RTL Support */
 
 /* Main body styling */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.6;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 'Noto Sans Arabic', 'Amiri', sans-serif;
+  line-height: 1.8;
+  direction: rtl;
+  text-align: right;
 }
 
 /* Header styling */
 h1, h2, h3, h4, h5, h6 {
   color: #2c3e50;
   font-weight: 600;
+  font-family: 'Noto Sans Arabic', 'Amiri', 'Segoe UI', sans-serif;
 }
 
 h1 {
@@ -20,10 +24,15 @@ h1 {
 /* Navbar customization */
 .navbar {
   background: linear-gradient(135deg, #c8102e 0%, #1e3a5f 100%) !important;
+  direction: rtl;
 }
 
 .navbar-brand {
   font-weight: bold;
+}
+
+.navbar-nav {
+  flex-direction: row-reverse;
 }
 
 /* Cards and containers */
@@ -38,13 +47,14 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin: 20px 0;
+  direction: rtl;
 }
 
 th {
   background-color: #3498db;
   color: white;
   padding: 12px;
-  text-align: left;
+  text-align: right;
 }
 
 td {

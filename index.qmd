@@ -1,45 +1,45 @@
 ---
-title: "Tunisia Schools Success Rate Analysis"
-subtitle: "A comprehensive analysis of student success rates across Tunisian educational institutions"
-author: "Chaima Massaoudi"
+title: "تحليل نسب النجاح في المدارس التونسية"
+subtitle: "تحليل شامل لنسب نجاح التلاميذ عبر المؤسسات التعليمية التونسية"
+author: "شيماء المسعودي"
 date: "2026-01-05"
 ---
 
-## Welcome {.unnumbered}
+## مرحبًا {.unnumbered}
 
-This project presents a comprehensive analysis of **student success rates** across schools in Tunisia. The dataset contains information about all educational levels, including:
+يقدم هذا المشروع تحليلاً شاملاً لـ**نسب نجاح التلاميذ** عبر المدارس في تونس. تحتوي قاعدة البيانات على معلومات حول جميع المستويات التعليمية، بما في ذلك:
 
-- Number of students enrolled per school and level
-- Number of students who successfully passed
-- Success rates calculated and compared across regions
+- عدد التلاميذ المسجلين في كل مدرسة ومستوى
+- عدد التلاميذ الناجحين
+- نسب النجاح المحسوبة والمقارنة عبر المناطق
 
-## Project Overview
+## نظرة عامة على المشروع
 
 ::: {.callout-note}
-## About the Data
-The dataset `liste_reussite_eleves.xls` contains **7,787 records** from **1,453 schools** covering **24 governorates** in Tunisia.
+## حول البيانات
+تحتوي قاعدة البيانات `liste_reussite_eleves.xls` على **7,787 سجلًا** من **1,453 مدرسة** تغطي **23 ولاية** في تونس.
 :::
 
-### Key Features
+### الميزات الرئيسية
 
-This analysis includes:
+يتضمن هذا التحليل:
 
-1. **Data Preprocessing**: Adding success rate percentages and mapping governorates
-2. **Exploratory Data Analysis**: Understanding the distribution of success rates
-3. **Visualizations**: Interactive charts and maps showing regional differences
-4. **Statistical Analysis**: Identifying patterns and significant differences
+1. **المعالجة المسبقة للبيانات**: إضافة نسب النجاح وتعيين الولايات
+2. **التحليل الاستكشافي للبيانات**: فهم توزيع نسب النجاح
+3. **التصورات البيانية**: رسوم بيانية تفاعلية توضح الفروقات الجهوية
+4. **التحليل الإحصائي**: تحديد الأنماط والفروقات المهمة
 
-## Quick Statistics
+## إحصائيات سريعة
 
 ```{r}
 #| label: quick-stats
 #| echo: false
 
-# Load the data
+# تحميل البيانات
 .libPaths(Sys.getenv("R_LIBS_USER"))
 source("R/load_data.R")
 
-# Calculate summary statistics
+# حساب الإحصائيات
 total_students <- sum(school_data$nb_students, na.rm = TRUE)
 total_passed <- sum(school_data$nb_passed, na.rm = TRUE)
 overall_rate <- round((total_passed / total_students) * 100, 2)
@@ -47,52 +47,62 @@ n_schools <- n_distinct(school_data$school_code)
 n_governorates <- n_distinct(school_data$governorate)
 ```
 
-| Metric | Value |
+| المؤشر | القيمة |
 |--------|-------|
-| Total Students | `r format(total_students, big.mark = ",")` |
-| Total Passed | `r format(total_passed, big.mark = ",")` |
-| Overall Success Rate | `r overall_rate`% |
-| Number of Schools | `r n_schools` |
-| Number of Governorates | `r n_governorates` |
+| إجمالي التلاميذ | `r format(total_students, big.mark = ",")` |
+| إجمالي الناجحين | `r format(total_passed, big.mark = ",")` |
+| نسبة النجاح الإجمالية | `r overall_rate`% |
+| عدد المدارس | `r n_schools` |
+| عدد الولايات | `r n_governorates` |
 
-## Project Structure
+## هيكل المشروع
 
 ```
 R_project/
-├── _quarto.yml          # Quarto configuration
-├── index.qmd            # This homepage
-├── data_exploration.qmd # Data exploration lab
-├── visualizations.qmd   # Data visualizations
-├── statistics.qmd       # Statistical analysis
+├── _quarto.yml          # إعدادات Quarto
+├── index.qmd            # الصفحة الرئيسية
+├── data_exploration.qmd # استكشاف البيانات
+├── visualizations.qmd   # التصورات البيانية
+├── statistics.qmd       # التحليل الإحصائي
+├── bac_analysis.qmd     # تحليل الباكالوريا
 ├── R/
-│   └── load_data.R      # Data loading and preprocessing
+│   └── load_data.R      # تحميل ومعالجة البيانات
 ├── data/
-│   └── liste_reussite_eleves.xls  # Raw data
-├── img/                 # Saved plots and figures
-└── styles.css           # Custom styling
+│   └── liste_reussite_eleves.xls  # البيانات الخام
+├── img/                 # الرسوم البيانية المحفوظة
+└── styles.css           # التنسيق المخصص
 ```
 
-## Navigation
+## التنقل
 
-Use the navigation bar above to explore different sections:
+استخدم شريط التنقل أعلاه لاستكشاف الأقسام المختلفة:
 
-- **[Data Exploration](data_exploration.qmd)**: Understand the structure and characteristics of the data
-- **[Visualizations](visualizations.qmd)**: View charts and graphs of success rates
-- **[Statistical Analysis](statistics.qmd)**: Dive into statistical tests and insights
-
-## Technologies Used
-
-This project was built using:
-
-- **R** for data analysis and visualization
-- **Quarto** for creating this interactive website
-- **ggplot2** for creating beautiful charts
-- **dplyr** for data manipulation
-- **kableExtra** for formatted tables
+- **[استكشاف البيانات](data_exploration.qmd)**: فهم بنية البيانات وخصائصها
+- **[قصة الباكالوريا](bac_story.qmd)**: قصة نتائج باكالوريا 2025
+- **[تحليل الباكالوريا](bac_analysis.qmd)**: تحليل مفصل لنسب النجاح
+- **[التصورات البيانية](visualizations.qmd)**: عرض الرسوم البيانية
+- **[التحليل الإحصائي](statistics.qmd)**: الاختبارات والتحليلات الإحصائية
 
 ---
 
-::: {.callout-tip}
-## Getting Started
-Click on "Data Exploration" in the navigation bar to begin exploring the dataset!
+## 🎓 باكالوريا 2025 - نظرة سريعة
+
+::: {.callout-important}
+## النتائج الرسمية
+نتائج الباكالوريا 2025 تكشف عن تفاوتات كبيرة:
+
+- **أعلى شعبة**: الرياضيات (74.93%)
+- **أضعف شعبة**: الآداب (23.02%)
+- **أفضل ولاية**: صفاقس 1 (71.31%)
+- **أضعف ولاية**: جندوبة (43.08%)
 :::
+
+| الشعبة | نسبة النجاح |
+|--------|-------------|
+| 🔢 رياضيات | 74.93% |
+| 🏃 رياضة | 73.33% |
+| 💻 علوم الإعلامية | 48.47% |
+| 🔬 العلوم التجريبية | 45.83% |
+| ⚙️ العلوم التقنية | 35.02% |
+| 💼 الاقتصاد والتصرف | 28.95% |
+| 📚 الآداب | 23.02% |

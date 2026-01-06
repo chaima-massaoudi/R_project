@@ -1,377 +1,256 @@
 ---
-title: "The Story of Success"
-subtitle: "Unveiling Educational Patterns Across Tunisia"
+title: "التصورات البيانية"
+subtitle: "رسوم بيانية تفاعلية لنسب النجاح"
 ---
 
 ```{r}
 #| label: setup
 #| include: false
 
-# Set library path and load packages
 .libPaths(Sys.getenv("R_LIBS_USER"))
 library(tidyverse)
 library(knitr)
 library(kableExtra)
 library(scales)
 
-# Load the data
 source("R/load_data.R")
-
-# Calculate key metrics
-total_students <- sum(school_data$nb_students, na.rm = TRUE)
-total_passed <- sum(school_data$nb_passed, na.rm = TRUE)
-total_failed <- sum(school_data$nb_failed, na.rm = TRUE)
-overall_rate <- round((total_passed / total_students) * 100, 1)
+source("R/bac_data.R")
 ```
 
-## Chapter 1: The Big Picture {.unnumbered}
-
-::: {.callout-tip appearance="simple"}
-## 🎯 The Central Question
-**What determines whether a Tunisian student succeeds?** Is it where they live? The level they're studying? Or something else entirely?
-:::
-
-Imagine **`r format(total_students, big.mark = ",")`** students across Tunisia, each with dreams and aspirations. Every year, they face the challenge of passing their academic year. 
-
-> **The verdict?** `r format(total_passed, big.mark = ",")` students succeeded, while `r format(total_failed, big.mark = ",")` faced setbacks.
+##  نظرة عامة على النجاح {.unnumbered}
 
 ```{r}
-#| label: fig-hero
-#| fig-cap: "The Tale of Two Outcomes: Success vs. Struggle"
-#| fig-width: 10
-#| fig-height: 6
-
-# Create dramatic visualization
-outcome_data <- data.frame(
-  status = c("SUCCESS", "STRUGGLE"),
-  count = c(total_passed, total_failed),
-  color = c("#27ae60", "#e74c3c")
-)
-
-outcome_data <- outcome_data %>%
-  mutate(
-    pct = round(count / sum(count) * 100, 1),
-    label = paste0(format(count, big.mark = ","), "\n(", pct, "%)")
-  )
-
-ggplot(outcome_data, aes(x = status, y = count, fill = status)) +
-  geom_col(width = 0.6, show.legend = FALSE) +
-  geom_text(aes(label = label), vjust = -0.3, size = 6, fontface = "bold") +
-  scale_fill_manual(values = c("SUCCESS" = "#27ae60", "STRUGGLE" = "#e74c3c")) +
-  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.15))) +
-  labs(
-    title = "THE VERDICT",
-    subtitle = paste0("Overall Success Rate: ", overall_rate, "%"),
-    x = "",
-    y = "Number of Students"
-  ) +
-  theme_minimal(base_size = 16) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 28, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 18, color = "#7f8c8d"),
-    axis.text.x = element_text(size = 18, face = "bold"),
-    panel.grid.major.x = element_blank()
-  )
-```
-
----
-
-## Chapter 2: A Nation Divided? {.unnumbered}
-
-::: {.callout-warning appearance="simple"}
-## 🗺️ The Geography of Success
-Does where you study determine your future? Let's explore the regional disparities.
-:::
-
-Tunisia's 24 governorates tell vastly different stories. Some regions shine as beacons of academic excellence, while others struggle to keep pace.
-
-```{r}
-#| label: fig-regional-story
-#| fig-cap: "The Great Divide: Success Rates Across Governorates"
+#| label: fig-overview
+#| fig-cap: "نسب النجاح الإجمالية حسب الولاية"
 #| fig-width: 14
 #| fig-height: 10
 
-gov_stats <- summary_by_governorate(school_data)
+gov_stats <- school_data %>%
+  filter(!is.na(governorate_ar)) %>%
+  group_by(governorate_ar) %>%
+  summarise(
+    students = sum(nb_students),
+    passed = sum(nb_passed),
+    success_rate = round(passed / students * 100, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(success_rate))
 
-# Categorize performance
-gov_stats <- gov_stats %>%
-  mutate(
-    performance = case_when(
-      overall_success_rate >= 85 ~ "🌟 Excellence",
-      overall_success_rate >= 75 ~ "✅ Good",
-      overall_success_rate >= 65 ~ "⚠️ Needs Attention",
-      TRUE ~ "🚨 Critical"
-    ),
-    bar_color = case_when(
-      overall_success_rate >= 85 ~ "#27ae60",
-      overall_success_rate >= 75 ~ "#3498db",
-      overall_success_rate >= 65 ~ "#f39c12",
-      TRUE ~ "#e74c3c"
-    )
-  )
-
-ggplot(gov_stats, aes(x = reorder(governorate, overall_success_rate), y = overall_success_rate)) +
-  geom_segment(aes(xend = governorate, yend = 0), color = "gray80", linewidth = 2) +
-  geom_point(aes(color = bar_color), size = 8, show.legend = FALSE) +
-  geom_text(aes(label = paste0(overall_success_rate, "%")), 
-            hjust = -0.5, size = 4, fontface = "bold") +
-  geom_hline(yintercept = 75, linetype = "dashed", color = "#e74c3c", linewidth = 1) +
-  annotate("text", x = 3, y = 77, label = "← National Target: 75%", 
-           color = "#e74c3c", fontface = "italic", size = 4) +
-  scale_color_identity() +
+ggplot(gov_stats, aes(x = reorder(governorate_ar, success_rate), y = success_rate)) +
+  geom_segment(aes(xend = governorate_ar, yend = 0), color = "#3498db", linewidth = 3, alpha = 0.5) +
+  geom_point(aes(color = success_rate, size = students), show.legend = TRUE) +
+  geom_text(aes(label = paste0(success_rate, "%")), hjust = -0.3, size = 4, fontface = "bold") +
+  scale_color_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60", midpoint = 90, name = "نسبة النجاح") +
+  scale_size_continuous(range = c(4, 15), name = "عدد التلاميذ", labels = comma) +
   coord_flip() +
   ylim(0, 100) +
   labs(
-    title = "REGIONAL PERFORMANCE RANKING",
-    subtitle = "Which governorates lead? Which ones need support?",
+    title = "🗺️ نسب النجاح حسب الولاية",
+    subtitle = "ترتيب الولايات من الأعلى إلى الأدنى",
     x = "",
-    y = "Success Rate (%)"
+    y = "نسبة النجاح (%)"
   ) +
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
     plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
-    axis.text.y = element_text(size = 11, face = "bold")
-  )
-```
-
-### 🏆 The Champions vs 🆘 The Challengers
-
-```{r}
-#| label: champions-challengers
-
-# Top 3 and Bottom 3
-top_3 <- gov_stats %>% arrange(desc(overall_success_rate)) %>% head(3)
-bottom_3 <- gov_stats %>% arrange(overall_success_rate) %>% head(3)
-
-cat("🏆 TOP PERFORMING GOVERNORATES:\n")
-for(i in 1:3) {
-  cat(paste0("   ", i, ". ", top_3$governorate[i], " - ", top_3$overall_success_rate[i], "%\n"))
-}
-
-cat("\n🆘 GOVERNORATES NEEDING SUPPORT:\n")
-for(i in 1:3) {
-  cat(paste0("   ", i, ". ", bottom_3$governorate[i], " - ", bottom_3$overall_success_rate[i], "%\n"))
-}
-
-gap <- max(gov_stats$overall_success_rate) - min(gov_stats$overall_success_rate)
-cat(paste0("\n📊 THE GAP: ", round(gap, 1), " percentage points between best and worst performing regions"))
-```
-
-::: {.callout-important}
-## 💡 Key Insight
-A student in **`r top_3$governorate[1]`** has a significantly higher chance of success than one in **`r bottom_3$governorate[1]`**. This `r round(gap, 1)`-point gap represents thousands of students whose outcomes may be influenced by geography alone.
-:::
-
----
-
-## Chapter 3: The Level Effect {.unnumbered}
-
-::: {.callout-note appearance="simple"}
-## 📚 Does difficulty increase with level?
-We often assume higher levels are harder. But is this true in Tunisia?
-:::
-
-```{r}
-#| label: fig-level-pyramid
-#| fig-cap: "The Educational Ladder: Success at Every Rung"
-#| fig-width: 12
-#| fig-height: 8
-
-level_stats <- summary_by_level(school_data)
-
-# Create level categories
-level_stats <- level_stats %>%
-  mutate(
-    difficulty = case_when(
-      overall_success_rate >= 90 ~ "Achievable",
-      overall_success_rate >= 80 ~ "Moderate",
-      overall_success_rate >= 70 ~ "Challenging",
-      TRUE ~ "Very Challenging"
-    )
-  )
-
-ggplot(level_stats, aes(x = reorder(level_name, overall_success_rate), y = overall_success_rate)) +
-  geom_col(aes(fill = overall_success_rate), show.legend = FALSE, width = 0.7) +
-  geom_text(aes(label = paste0(overall_success_rate, "%")), 
-            hjust = -0.2, size = 4, fontface = "bold", color = "#2c3e50") +
-  scale_fill_gradient2(low = "#e74c3c", mid = "#f39c12", high = "#27ae60", midpoint = 80) +
-  coord_flip() +
-  ylim(0, 105) +
-  labs(
-    title = "SUCCESS BY EDUCATIONAL LEVEL",
-    subtitle = "Some rungs of the ladder are harder to climb",
-    x = "",
-    y = "Success Rate (%)"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 20, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d")
-  )
-```
-
----
-
-## Chapter 4: The Hidden Patterns {.unnumbered}
-
-::: {.callout-tip appearance="simple"}
-## 🔍 Deep Dive: What the heatmap reveals
-Combining region and level tells a more complete story.
-:::
-
-```{r}
-#| label: fig-heatmap-story
-#| fig-cap: "The Full Picture: Region × Level Performance Matrix"
-#| fig-width: 14
-#| fig-height: 12
-
-# Create level categories
-school_data_cat <- school_data %>%
-  mutate(
-    level_cat = case_when(
-      str_detect(level_name, "سابعة") ~ "7th Year",
-      str_detect(level_name, "ثامنة") ~ "8th Year",
-      str_detect(level_name, "تاسعة") ~ "9th Year",
-      str_detect(level_name, "أولى ثانوي") ~ "1st Secondary",
-      str_detect(level_name, "ثانية") ~ "2nd Secondary",
-      str_detect(level_name, "ثالثة") ~ "3rd Secondary",
-      TRUE ~ "Other"
-    )
-  )
-
-heatmap_data <- school_data_cat %>%
-  filter(!is.na(governorate), level_cat != "Other") %>%
-  group_by(governorate, level_cat) %>%
-  summarise(
-    avg_rate = round(mean(success_rate, na.rm = TRUE), 1),
-    .groups = "drop"
-  )
-
-ggplot(heatmap_data, aes(x = level_cat, y = reorder(governorate, avg_rate), fill = avg_rate)) +
-  geom_tile(color = "white", linewidth = 1) +
-  geom_text(aes(label = avg_rate, 
-                color = ifelse(avg_rate > 75, "white", "black")), 
-            size = 3.5, fontface = "bold") +
-  scale_fill_gradient2(
-    low = "#c0392b", 
-    mid = "#f39c12", 
-    high = "#27ae60", 
-    midpoint = 75,
-    name = "Success\nRate (%)"
-  ) +
-  scale_color_identity() +
-  labs(
-    title = "PERFORMANCE HEATMAP",
-    subtitle = "Dark red = struggle | Yellow = moderate | Green = success",
-    x = "Educational Level",
-    y = "Governorate"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 20, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 12, color = "#7f8c8d"),
-    axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"),
-    axis.text.y = element_text(face = "bold"),
+    axis.text.y = element_text(size = 12, face = "bold"),
     legend.position = "right"
   )
 ```
 
 ---
 
-## Chapter 5: The Distribution Story {.unnumbered}
+## 🎓 المسيرة التعليمية {.unnumbered}
 
 ```{r}
-#| label: fig-distribution-story
-#| fig-cap: "Where Do Most Schools Fall?"
-#| fig-width: 12
-#| fig-height: 7
+#| label: fig-journey
+#| fig-cap: "نسب النجاح عبر السنوات الدراسية"
+#| fig-width: 14
+#| fig-height: 8
 
-mean_rate <- mean(school_data$success_rate, na.rm = TRUE)
-median_rate <- median(school_data$success_rate, na.rm = TRUE)
+year_analysis <- school_data %>%
+  mutate(
+    year_order = case_when(
+      str_detect(level_name, "سابعة") ~ 1,
+      str_detect(level_name, "ثامنة") ~ 2,
+      str_detect(level_name, "تاسعة") ~ 3,
+      str_detect(level_name, "أولى") ~ 4,
+      str_detect(level_name, "ثانية") ~ 5,
+      str_detect(level_name, "ثالثة") ~ 6,
+      TRUE ~ 0
+    ),
+    year_label = case_when(
+      str_detect(level_name, "سابعة") ~ "السابعة\nأساسي",
+      str_detect(level_name, "ثامنة") ~ "الثامنة\nأساسي",
+      str_detect(level_name, "تاسعة") ~ "التاسعة\nأساسي",
+      str_detect(level_name, "أولى") ~ "الأولى\nثانوي",
+      str_detect(level_name, "ثانية") ~ "الثانية\nثانوي",
+      str_detect(level_name, "ثالثة") ~ "الثالثة\nثانوي",
+      TRUE ~ "أخرى"
+    )
+  ) %>%
+  filter(year_order > 0) %>%
+  group_by(year_order, year_label) %>%
+  summarise(
+    students = sum(nb_students),
+    passed = sum(nb_passed),
+    success_rate = round(passed / students * 100, 1),
+    .groups = "drop"
+  )
 
-ggplot(school_data, aes(x = success_rate)) +
-  geom_histogram(aes(y = after_stat(count)), binwidth = 5, 
-                 fill = "#3498db", color = "white", alpha = 0.8) +
-  geom_vline(xintercept = mean_rate, color = "#e74c3c", linewidth = 1.5, linetype = "solid") +
-  geom_vline(xintercept = 50, color = "#2c3e50", linewidth = 1, linetype = "dashed") +
-  annotate("label", x = mean_rate + 8, y = 800, 
-           label = paste0("Mean: ", round(mean_rate, 1), "%"), 
-           fill = "#e74c3c", color = "white", fontface = "bold", size = 5) +
-  annotate("label", x = 50, y = 600, 
-           label = "Passing Line: 50%", 
-           fill = "#2c3e50", color = "white", fontface = "bold", size = 4) +
+ggplot(year_analysis, aes(x = year_order, y = success_rate)) +
+  geom_area(fill = "#3498db", alpha = 0.3) +
+  geom_line(color = "#2c3e50", linewidth = 2) +
+  geom_point(aes(size = students), color = "#e74c3c") +
+  geom_text(aes(label = paste0(success_rate, "%")), vjust = -1.5, size = 6, fontface = "bold") +
+  scale_x_continuous(breaks = year_analysis$year_order, labels = year_analysis$year_label) +
+  scale_size_continuous(range = c(8, 18), guide = "none") +
   labs(
-    title = "THE BELL CURVE OF SUCCESS",
-    subtitle = "Most schools cluster around high success rates - a positive sign!",
-    x = "Success Rate (%)",
-    y = "Number of Schools"
+    title = " الطريق نحو الباكالوريا",
+    subtitle = "تتبع نسب النجاح من السابعة إلى الثالثة ثانوي",
+    x = "السنة الدراسية",
+    y = "نسبة النجاح (%)"
   ) +
+  ylim(70, 100) +
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d")
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
+    axis.text.x = element_text(size = 11, face = "bold")
   )
 ```
 
-::: {.callout-note}
-## 📊 What This Tells Us
-The distribution is **left-skewed** - meaning most schools achieve HIGH success rates. This is encouraging! However, the long tail to the left shows that some schools are struggling significantly.
-:::
-
 ---
 
-## Chapter 6: Heroes & Underdogs {.unnumbered}
-
-### 🌟 The Top Performers
-
-These schools achieved near-perfect success rates while educating significant numbers of students:
+##  باكالوريا 2025 حسب الشعبة {.unnumbered}
 
 ```{r}
-#| label: heroes
+#| label: fig-bac-field
+#| fig-cap: "نسب نجاح باكالوريا 2025 حسب الشعبة"
+#| fig-width: 14
+#| fig-height: 10
 
-top_performers <- school_data %>%
-  filter(nb_students >= 50) %>%
-  arrange(desc(success_rate), desc(nb_students)) %>%
-  head(10) %>%
-  select(school_name, governorate, level_name, nb_students, success_rate)
-
-top_performers %>%
-  kable(
-    col.names = c("🏫 School", "📍 Governorate", "📚 Level", "👥 Students", "✅ Success %"),
-    caption = "🏆 Top 10 High-Volume High-Performing Schools"
-  ) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  row_spec(1:3, bold = TRUE, background = "#d4edda")
-```
-
-### 🆘 Schools Needing Support
-
-These schools have room for improvement and could benefit from targeted interventions:
-
-```{r}
-#| label: underdogs
-
-struggling <- school_data %>%
-  filter(nb_students >= 50) %>%
-  arrange(success_rate) %>%
-  head(10) %>%
-  select(school_name, governorate, level_name, nb_students, success_rate)
-
-struggling %>%
-  kable(
-    col.names = c("🏫 School", "📍 Governorate", "📚 Level", "👥 Students", "⚠️ Success %"),
-    caption = "🆘 Schools That Could Benefit from Additional Support"
-  ) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
-  row_spec(1:3, bold = TRUE, background = "#f8d7da")
+ggplot(bac_by_field, aes(x = reorder(field_ar, bac_success_rate), y = bac_success_rate)) +
+  geom_col(aes(fill = bac_success_rate), width = 0.75, show.legend = FALSE) +
+  geom_text(aes(label = paste0(bac_success_rate, "%")), hjust = -0.1, size = 6, fontface = "bold") +
+  geom_hline(yintercept = 50, linetype = "dashed", color = "#e74c3c", linewidth = 1.2) +
+  annotate("text", x = 4, y = 52, label = "← عتبة 50%", color = "#e74c3c", fontface = "bold", size = 5) +
+  scale_fill_gradient2(low = "#c0392b", mid = "#f39c12", high = "#27ae60", midpoint = 50) +
+  coord_flip() +
+  ylim(0, 85) +
+  labs(
+    title = " باكالوريا 2025 - النجاح حسب الشعبة",
+    subtitle = "النتائج الرسمية: الدورة الرئيسية والمراقبة",
+    x = "",
+    y = "نسبة النجاح (%)",
+    caption = "المصدر: وزارة التربية، تونس"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 24, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
+    axis.text.y = element_text(size = 14, face = "bold")
+  )
 ```
 
 ---
 
-## The Story Continues... {.unnumbered}
+## 🗺️ باكالوريا 2025 حسب الولاية {.unnumbered}
 
-::: {.callout-tip}
-## 📖 Next Chapter
-Head to **[Statistical Analysis](statistics.qmd)** to discover the mathematical evidence behind these patterns and test our hypotheses rigorously.
-:::
+```{r}
+#| label: fig-bac-gov
+#| fig-cap: "نسب نجاح باكالوريا 2025 حسب الولاية"
+#| fig-width: 14
+#| fig-height: 14
+
+ggplot(bac_by_governorate, aes(x = reorder(governorate_ar, bac_success_rate), y = bac_success_rate)) +
+  geom_segment(aes(xend = governorate_ar, yend = 40), color = "gray80", linewidth = 1) +
+  geom_point(aes(color = bac_success_rate, size = candidates), show.legend = TRUE) +
+  geom_text(aes(label = paste0(bac_success_rate, "%")), hjust = -0.3, size = 4, fontface = "bold") +
+  scale_color_gradient2(low = "#c0392b", mid = "#f39c12", high = "#27ae60", midpoint = 55, name = "نسبة\nالنجاح") +
+  scale_size_continuous(range = c(4, 12), name = "المترشحون", labels = comma) +
+  geom_hline(yintercept = 50, linetype = "dashed", color = "#e74c3c", linewidth = 1) +
+  coord_flip() +
+  ylim(40, 78) +
+  labs(
+    title = " باكالوريا 2025 - الترتيب الجهوي",
+    subtitle = "ترتيب المندوبيات الجهوية حسب نسبة النجاح",
+    x = "",
+    y = "نسبة النجاح (%)",
+    caption = "المصدر: وزارة التربية - باكالوريا 2025"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 22, color = "#2c3e50"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
+    axis.text.y = element_text(size = 11, face = "bold"),
+    legend.position = "right"
+  )
+```
+
+---
+
+## 💔 الفجوة الحقيقية {.unnumbered}
+
+```{r}
+#| label: fig-gap
+#| fig-cap: "الفجوة بين الأداء المدرسي ونتائج الباكالوريا"
+#| fig-width: 14
+#| fig-height: 10
+
+comparison_data <- tibble(
+  field = c(" الآداب", " الاقتصاد", " العلوم التقنية", " العلوم التجريبية", 
+            " علوم الإعلامية", " الرياضة", " الرياضيات"),
+  prebac_estimate = c(90.5, 85.4, 88.2, 92.5, 94.1, 97.8, 97.2),
+  bac_actual = c(23.02, 28.95, 35.02, 45.83, 48.47, 73.33, 74.93)
+) %>%
+  mutate(gap = prebac_estimate - bac_actual)
+
+comparison_long <- comparison_data %>%
+  pivot_longer(cols = c(prebac_estimate, bac_actual), 
+               names_to = "exam_type", values_to = "success_rate") %>%
+  mutate(exam_label = if_else(exam_type == "prebac_estimate", " ما قبل الباك (المدرسة)", " باكالوريا 2025"))
+
+ggplot(comparison_long, aes(x = reorder(field, success_rate), y = success_rate, fill = exam_label)) +
+  geom_col(position = "dodge", width = 0.7) +
+  geom_text(aes(label = paste0(success_rate, "%")), 
+            position = position_dodge(width = 0.7), hjust = -0.1, size = 4, fontface = "bold") +
+  scale_fill_manual(values = c(" ما قبل الباك (المدرسة)" = "#27ae60", " باكالوريا 2025" = "#c0392b"), name = "نوع الامتحان") +
+  coord_flip() +
+  ylim(0, 110) +
+  labs(
+    title = " الفجوة الحقيقية",
+    subtitle = "الأداء المدرسي مقابل نتائج الباكالوريا 2025",
+    x = "",
+    y = "نسبة النجاح (%)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 24, color = "#c0392b"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, color = "#7f8c8d"),
+    axis.text.y = element_text(size = 13, face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+---
+
+##  جدول الفجوة {.unnumbered}
+
+```{r}
+#| label: gap-table
+
+comparison_data %>%
+  arrange(desc(gap)) %>%
+  mutate(
+    prebac_estimate = paste0(prebac_estimate, "%"),
+    bac_actual = paste0(bac_actual, "%"),
+    gap = paste0("🔻 -", round(gap, 1), " نقطة")
+  ) %>%
+  kable(col.names = c("الشعبة", "ما قبل الباك %", "باكالوريا 2025 %", "الفجوة"),
+        caption = "الانخفاض الحاد من الأداء المدرسي إلى نتائج الباكالوريا") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  column_spec(1, bold = TRUE) %>%
+  column_spec(4, color = "#c0392b", bold = TRUE)
+```
