@@ -12,6 +12,8 @@ website:
         text: Home
       - href: data_exploration.qmd
         text: Data Exploration
+      - href: bac_analysis.qmd
+        text: 🎓 Road to Bac
       - href: visualizations.qmd
         text: Visualizations
       - href: statistics.qmd
