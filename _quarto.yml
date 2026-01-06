@@ -12,8 +12,10 @@ website:
         text: Home
       - href: data_exploration.qmd
         text: Data Exploration
+      - href: bac_story.qmd
+        text: 🎓 Bac Story (from Jupyter)
       - href: bac_analysis.qmd
-        text: 🎓 Road to Bac
+        text: 📊 Full Bac Analysis
       - href: visualizations.qmd
         text: Visualizations
       - href: statistics.qmd

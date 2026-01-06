@@ -1,0 +1,201 @@
+---
+title: "🎓 The Road to Baccalaureate"
+subtitle: "Investigating Tunisia's Educational Journey: Where Do Students Struggle?"
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+.libPaths(Sys.getenv("R_LIBS_USER"))
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# Load pre-computed results from Jupyter notebook
+school_data <- readRDS("data/results/school_data_processed.rds")
+summary_stats <- readRDS("data/results/summary_stats.rds")
+summary_by_gov <- readRDS("data/results/summary_by_governorate.rds")
+summary_by_level <- readRDS("data/results/summary_by_level.rds")
+year_analysis <- readRDS("data/results/year_analysis.rds")
+bac_by_field <- readRDS("data/results/bac_by_field.rds")
+bac_by_governorate <- readRDS("data/results/bac_by_governorate.rds")
+comparison_data <- readRDS("data/results/gap_analysis.rds")
+final_summary <- readRDS("data/results/final_summary.rds")
+```
+
+# 📖 The Story Begins {.unnumbered}
+
+::: {.callout-important appearance="simple"}
+## 🎯 The Investigation
+Tunisia's Baccalaureate exam is the gateway to higher education. But **where in the educational journey do students begin to struggle?** We're going to trace the path from 7th grade all the way to the Baccalaureate to find the weak points.
+:::
+
+---
+
+## 🔍 The Educational Journey {.unnumbered}
+
+![The Path to Baccalaureate](img/01_educational_journey.png)
+
+---
+
+## 🎓 Baccalaureate 2025 - Success by Field {.unnumbered}
+
+::: {.callout-warning appearance="simple"}
+## ⚡ The Reality Check
+The official Bac 2025 results reveal a **DRAMATIC DROP** from school performance.
+:::
+
+![Bac 2025 Success Rates by Field](img/02_bac_by_field.png)
+
+### 📊 Field Performance Summary
+
+```{r}
+#| label: field-table
+
+bac_by_field %>%
+  select(field_en, field_ar, bac_success_rate) %>%
+  arrange(desc(bac_success_rate)) %>%
+  mutate(
+    status = case_when(
+      bac_success_rate >= 70 ~ "🌟 Excellent",
+      bac_success_rate >= 50 ~ "✅ Moderate",
+      bac_success_rate >= 35 ~ "⚠️ Struggling",
+      TRUE ~ "🚨 Critical"
+    )
+  ) %>%
+  kable(col.names = c("Field", "الشعبة", "Bac Rate (%)", "Status")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+---
+
+## 🗺️ Baccalaureate 2025 - Regional Rankings {.unnumbered}
+
+![Bac 2025 by Governorate](img/03_bac_by_governorate.png)
+
+```{r}
+#| label: regional-summary
+
+top_5 <- bac_by_governorate %>% head(5)
+bottom_5 <- bac_by_governorate %>% tail(5)
+
+cat("🏆 TOP 5 REGIONS:\n")
+for(i in 1:5) {
+  cat(paste0("   ", i, ". ", top_5$governorate_ar[i], " - ", top_5$bac_success_rate[i], "%\n"))
+}
+
+cat("\n🆘 BOTTOM 5 REGIONS:\n")
+for(i in 1:5) {
+  cat(paste0("   ", i, ". ", bottom_5$governorate_ar[6-i], " - ", bottom_5$bac_success_rate[6-i], "%\n"))
+}
+```
+
+---
+
+## 💔 The Reality Gap {.unnumbered}
+
+::: {.callout-important appearance="simple"}
+## 💔 The Harsh Truth
+Students pass their school years with **85-95% success**, but then face a **dramatic drop** in the actual Baccalaureate exam.
+:::
+
+![Pre-Bac vs Actual Bac](img/04_gap_analysis.png)
+
+### 📉 The Shocking Drop
+
+```{r}
+#| label: gap-table
+
+comparison_data %>%
+  arrange(desc(gap)) %>%
+  select(field, field_ar, prebac_estimate, bac_actual, gap) %>%
+  mutate(
+    prebac_estimate = paste0(prebac_estimate, "%"),
+    bac_actual = paste0(bac_actual, "%"),
+    gap = paste0("🔻 -", round(gap, 1), " pts")
+  ) %>%
+  kable(col.names = c("Field", "الشعبة", "Pre-Bac %", "Bac 2025 %", "Gap")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  column_spec(5, color = "#c0392b", bold = TRUE)
+```
+
+---
+
+## 🎯 Pre-Bac Performance Heatmap {.unnumbered}
+
+![Heatmap: Fields × Regions](img/05_heatmap.png)
+
+---
+
+## 📊 Success Distribution {.unnumbered}
+
+![Distribution of Success Rates](img/06_distribution.png)
+
+---
+
+## 📋 Final Summary {.unnumbered}
+
+```{r}
+#| label: final-summary-table
+
+data.frame(
+  Metric = c(
+    "📊 National Bac 2025 Success Rate",
+    "👥 Total Bac 2025 Candidates",
+    "✅ Total Passed Bac 2025",
+    "🔢 Best Field (Bac 2025)",
+    "📚 Weakest Field (Bac 2025)",
+    "🏆 Best Region (Bac 2025)",
+    "🆘 Weakest Region (Bac 2025)",
+    "💔 Biggest Gap (Pre-Bac vs Bac)"
+  ),
+  Value = c(
+    paste0(final_summary$national_bac_rate, "%"),
+    format(final_summary$total_bac_candidates, big.mark = ","),
+    format(final_summary$total_bac_passed, big.mark = ","),
+    final_summary$best_field,
+    final_summary$worst_field,
+    final_summary$best_region,
+    final_summary$worst_region,
+    final_summary$biggest_gap
+  )
+) %>%
+  kable(col.names = c("📋 Metric", "📈 Finding")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  column_spec(1, bold = TRUE, width = "20em") %>%
+  column_spec(2, color = "#2c3e50", bold = TRUE)
+```
+
+---
+
+## 🎯 Recommendations {.unnumbered}
+
+::: {.callout-tip}
+## 📝 Action Plan for Improving Baccalaureate Success
+
+1. **🚨 URGENT: Literature & Economics** - These fields have only 23-29% Bac success. Need complete curriculum review.
+   
+2. **🗺️ Target Jendouba, Zaghouan, Kairouan, Gafsa** - Regions with < 47% success need urgent intervention.
+
+3. **📊 Bridge the Gap** - Pre-Bac assessments (90%) don't prepare students for the actual Bac (23-75%).
+
+4. **🔢 Learn from Math & Sports** - These fields achieve 73-75% Bac success.
+
+5. **🏆 Learn from Sfax & Medenine** - These regions lead at 68-71%.
+:::
+
+---
+
+::: {.callout-important}
+## 🔮 The Harsh Reality
+This analysis reveals Tunisia's education system has a **preparation crisis**. Students appear successful in school (85-95%) but face harsh reality at the Baccalaureate (23-75%).
+:::
+
+---
+
+::: {.callout-note}
+## 📓 Data Source
+All analysis performed in [analysis.ipynb](analysis.ipynb) using R.
+Results loaded from `data/results/` folder.
+:::
