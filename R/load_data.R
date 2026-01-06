@@ -11,62 +11,66 @@ library(ggplot2)
 # ==============================================================================
 # Governorate Mapping based on school code prefix
 # ==============================================================================
-# Tunisia has 24 governorates, each with a specific code prefix
+# Tunisia has 24 governorates - mapping based on actual school data analysis
 
 governorate_mapping <- tibble(
-  code_prefix = c(11, 12, 13, 14, 21, 22, 23, 31, 32, 33, 41, 42, 43, 
-                  51, 52, 53, 61, 71, 72, 81, 82, 83, 84, 91),
+  code_prefix = c(10, 11, 12, 13, 14, 15, 21, 31, 32, 41, 42, 43, 
+                  51, 52, 53, 61, 62, 63, 64, 71, 72, 81, 82, 83, 84, 91),
   governorate = c(
-    "Tunis",           # 11
-    "Ariana",          # 12
-    "Ben Arous",       # 13
-    "Manouba",         # 14
-    "Nabeul",          # 21
-    "Zaghouan",        # 22
-    "Bizerte",         # 23
-    "Beja",            # 31
-    "Jendouba",        # 32
-    "Le Kef",          # 33
-    "Siliana",         # 41
-    "Sousse",          # 42
-    "Monastir",        # 43
-    "Mahdia",          # 51
-    "Sfax",            # 52
-    "Kairouan",        # 53
-    "Kasserine",       # 61
-    "Sidi Bouzid",     # 71
-    "Gabes",           # 72
-    "Medenine",        # 81
-    "Tataouine",       # 82
-    "Gafsa",           # 83
-    "Tozeur",          # 84
-    "Kebili"           # 91
+    "Tunis",           # 10 - Carthage area
+    "Tunis",           # 11 - El Menzah area
+    "Ariana",          # 12 - Soukra area
+    "Ben Arous",       # 13 - Mornag area
+    "Zaghouan",        # 14 - El Fahs area
+    "Manouba",         # 15 - Oued Ellil area
+    "Bizerte",         # 21 - Menzel Bourguiba
+    "Beja",            # 31 - Beja city
+    "Jendouba",        # 32 - Ain Draham
+    "Le Kef",          # 41 - Le Sers
+    "Siliana",         # 42 - Siliana city
+    "Kasserine",       # 43 - Kasserine area
+    "Mahdia",          # 51 - Mahdia area
+    "Gafsa",           # 52 - Redeyef area
+    "Sidi Bouzid",     # 53 - Sidi Bouzid area
+    "Kebili",          # 61 - Jemna area
+    "Tataouine",       # 62 - Tataouine city
+    "Medenine",        # 63 - Boughrara area
+    "Gabes",           # 64 - Gabes area
+    "Sfax",            # 71 - Sakiet Ezzit
+    "Sfax",            # 72 - Sfax suburbs
+    "Kairouan",        # 81 - Oueslati area
+    "Monastir",        # 82 - Cherben area
+    "Monastir",        # 83 - Moknine area
+    "Sousse",          # 84 - Enfidha area
+    "Nabeul"           # 91 - Bou Argoub area
   ),
   governorate_ar = c(
     "تونس",
+    "تونس",
     "أريانة",
     "بن عروس",
-    "منوبة",
-    "نابل",
     "زغوان",
+    "منوبة",
     "بنزرت",
     "باجة",
     "جندوبة",
     "الكاف",
     "سليانة",
-    "سوسة",
-    "المنستير",
+    "القصرين",
     "المهدية",
+    "قفصة",
+    "سيدي بوزيد",
+    "قبلي",
+    "تطاوين",
+    "مدنين",
+    "قابس",
+    "صفاقس",
     "صفاقس",
     "القيروان",
-    "القصرين",
-    "سيدي بوزيد",
-    "قابس",
-    "مدنين",
-    "تطاوين",
-    "قفصة",
-    "توزر",
-    "قبلي"
+    "المنستير",
+    "المنستير",
+    "سوسة",
+    "نابل"
   )
 )
 
