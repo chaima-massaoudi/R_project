@@ -1,0 +1,56 @@
+/*-- scss:defaults --*/
+$presentation-font-size-root: 36px;
+$presentation-heading-font: 'Noto Sans Arabic', 'Amiri', sans-serif;
+$presentation-font-family-main: 'Noto Sans Arabic', 'Amiri', sans-serif;
+
+/*-- scss:rules --*/
+
+.reveal {
+  font-family: 'Noto Sans Arabic', 'Amiri', 'Arial', sans-serif;
+}
+
+.reveal h1, .reveal h2, .reveal h3 {
+  font-family: 'Noto Sans Arabic', 'Amiri', sans-serif;
+  color: #2c3e50;
+}
+
+.reveal h2 {
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 10px;
+}
+
+.reveal .slides {
+  text-align: right;
+}
+
+.reveal table {
+  font-size: 0.8em;
+  margin: auto;
+}
+
+.reveal table th {
+  background-color: #3498db;
+  color: white;
+}
+
+.reveal table td, .reveal table th {
+  padding: 8px 15px;
+  text-align: center;
+}
+
+.reveal .columns {
+  display: flex;
+  gap: 20px;
+}
+
+.reveal code {
+  font-size: 0.7em;
+  background-color: #f4f4f4;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Center content for specific slides */
+.reveal section.center-content {
+  text-align: center;
+}
