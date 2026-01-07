@@ -134,9 +134,9 @@ kable(top_results,
 ```
 
 ### الملاحظات الرئيسية:
-- **فنون التشكيل** تتصدر بنسبة 80%
-- **الرياضيات** في المرتبة الثانية بـ 71.09%
-- **الرياضة** تحقق 69.73%
+- **الرياضيات** تتصدر بنسبة 74.93%
+- **الرياضة** في المرتبة الثانية بـ 73.33%
+- **علوم الإعلامية** بنسبة 48.47%
 
 ---
 
@@ -253,16 +253,16 @@ ggplot(gap_analysis, aes(x = reorder(field_ar, gap), y = gap, fill = gap > 0)) +
 
 ::: {.column width="50%"}
 ### النتائج الرئيسية
-- المعدل الوطني: **53.05%**
-- أفضل شعبة: **فنون التشكيل** (80%)
+- المعدل الوطني: **57.73%**
+- أفضل شعبة: **الرياضيات** (74.93%)
 - فوارق جهوية ملحوظة
 - شعب علمية تتفوق على الأدبية
 :::
 
 ::: {.column width="50%"}
 ### Résultats Clés
-- Moyenne nationale: **53.05%**
-- Meilleure filière: **Arts** (80%)
+- Moyenne nationale: **57.73%**
+- Meilleure filière: **Mathématiques** (74.93%)
 - Disparités régionales notables
 - Filières scientifiques surpassent littéraires
 :::
